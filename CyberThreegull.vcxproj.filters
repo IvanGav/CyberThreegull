@@ -20,10 +20,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\CyberSeaquell.h">
+    <ClInclude Include="src\CyberThreegull.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\CyberSeaquell_decl.h">
+    <ClInclude Include="src\CyberThreegull_decl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\DrillLib.h">

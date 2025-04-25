@@ -1,5 +1,5 @@
 #pragma once
-#include "CyberSeaquell_decl.h"
+#include "CyberThreegull_decl.h"
 #include "VK.h"
 #include "Win32.h"
 #include "DynamicVertexBuffer.h"
@@ -9,7 +9,7 @@
 #include "Sounds.h"
 
 
-namespace CyberSeaquell {
+namespace CyberThreegull {
 
 U64 frameNumber;
 U64 prevFrameTime;
@@ -48,9 +48,6 @@ DWORD WINAPI audio_thread_func(LPVOID) {
 
 void keyboard_callback(Win32::Key key, Win32::ButtonState state) {
 	V2F32 mousePos = Win32::get_mouse();
-	if (state == Win32::BUTTON_STATE_DOWN) {
-		Sounds::play_sound(Sounds::bg);
-	}
 }
 void mouse_callback(Win32::MouseButton button, Win32::MouseValue state) {
 	V2F32 mousePos = Win32::get_mouse();
@@ -189,8 +186,6 @@ void run_cyber_seaquell() {
 
 	Win32::show_window();
 	Win32::set_cursor(Win32::CURSOR_TYPE_POINTER);
-
-	Sounds::play_sound(Sounds::bg);
 
 	while (!Win32::windowShouldClose) {
 		Win32::poll_events();

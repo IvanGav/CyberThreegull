@@ -174,8 +174,8 @@
     <ClCompile Include="src\Entrypoint.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\CyberSeaquell.h" />
-    <ClInclude Include="src\CyberSeaquell_decl.h" />
+    <ClInclude Include="src\CyberThreegull.h" />
+    <ClInclude Include="src\CyberThreegull_decl.h" />
     <ClInclude Include="src\DrillLib.h" />
     <ClInclude Include="src\DrillLibDefs.h" />
     <ClInclude Include="src\DrillMath.h" />

@@ -1,7 +1,7 @@
 #pragma once
 #include "DrillLib.h"
 
-namespace CyberSeaquell {
+namespace CyberThreegull {
 extern U64 frameNumber;
 extern U64 prevFrameTime;
 extern U64 frameTime;

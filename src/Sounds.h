@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DrillLib.h"
-#include "CyberSeaquell_decl.h"
+#include "CyberThreegull_decl.h"
 
 namespace Sounds {
 
@@ -81,15 +81,13 @@ void load_source(AudioSource* srcOut, StrA path) {
 	}
 }
 
-AudioSource bg;
-
 void load_sources() {
-	load_source(&bg, "./resources/sounds/key"a);
+	//load_source(&whatever, "./resources/sounds/whatever"a);
 }
 
 
 void play_sound(AudioSource& src) {
-	instances.push_back(AudioInstance{ &src, CyberSeaquell::audioPlaybackTime });
+	instances.push_back(AudioInstance{ &src, CyberThreegull::audioPlaybackTime });
 }
 
 void mix_into_buffer(F32* buffer, U32 numSamples, U32 numChannels, F32 timeAmount) {
@@ -97,13 +95,13 @@ void mix_into_buffer(F32* buffer, U32 numSamples, U32 numChannels, F32 timeAmoun
 	memset(buffer, 0, numSamples * numChannels * sizeof(F32));
 	for (U32 i = 0; i < instances.size; i++) {
 		AudioInstance& inst = instances.data[i];
-		if (CyberSeaquell::audioPlaybackTime >= inst.startTime + inst.src->length) {
+		if (CyberThreegull::audioPlaybackTime >= inst.startTime + inst.src->length) {
 			toRemove = i + 1;
 		} else {
 			F32* buf = buffer;
 			for (U32 j = 0; j < numSamples; j++) {
 				F64 dt = F64(j) / F64(numSamples) * F64(timeAmount);
-				F64 t = (CyberSeaquell::audioPlaybackTime + dt - inst.startTime) * F64(inst.src->sampleRate);
+				F64 t = (CyberThreegull::audioPlaybackTime + dt - inst.startTime) * F64(inst.src->sampleRate);
 				F32 val = U32(t) < inst.src->sampleCount ? inst.src->data[U32(t)] : 0.0F;
 				for (U32 k = 0; k < numChannels; k++) {
 					*buf++ += val;
