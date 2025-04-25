@@ -173,6 +173,28 @@
   <ItemGroup>
     <ClCompile Include="src\Entrypoint.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\CyberSeaquell.h" />
+    <ClInclude Include="src\CyberSeaquell_decl.h" />
+    <ClInclude Include="src\DrillLib.h" />
+    <ClInclude Include="src\DrillLibDefs.h" />
+    <ClInclude Include="src\DrillMath.h" />
+    <ClInclude Include="src\DynamicVertexBuffer.h" />
+    <ClInclude Include="src\DynamicVertexBuffer_decl.h" />
+    <ClInclude Include="src\PNG.h" />
+    <ClInclude Include="src\SerializeTools.h" />
+    <ClInclude Include="src\Sounds.h" />
+    <ClInclude Include="src\TextRenderer.h" />
+    <ClInclude Include="src\Textures.h" />
+    <ClInclude Include="src\Textures_decl.h" />
+    <ClInclude Include="src\UI.h" />
+    <ClInclude Include="src\VK.h" />
+    <ClInclude Include="src\VKStaging.h" />
+    <ClInclude Include="src\VKStaging_decl.h" />
+    <ClInclude Include="src\VK_decl.h" />
+    <ClInclude Include="src\WASAPIInterface.h" />
+    <ClInclude Include="src\Win32.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

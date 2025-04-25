@@ -1,6 +1,9 @@
-#include "Windows.h"
+#include "CyberSeaquell.h"
 
 void mainCRTStartup() {
-	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), "Hello World\n", 12, NULL, NULL);
+	if (!drill_lib_init()) {
+		ExitProcess(EXIT_FAILURE);
+	}
+	CyberSeaquell::run_cyber_seaquell();
 	ExitProcess(EXIT_SUCCESS);
 }
