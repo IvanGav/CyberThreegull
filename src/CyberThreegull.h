@@ -9,6 +9,7 @@
 #include "WASAPIInterface.h"
 #include "Resources.h"
 #include "Sounds.h"
+#include "Terminal/Terminal.h"
 
 
 namespace CyberThreegull {
@@ -249,14 +250,21 @@ void do_frame() {
 		modelInfo.texIdx = Textures::brainTexture.index;
 		VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
 		Resources::rooms.draw_named(cmdBuf, "Sphere.001"a);
-
-
+		
 		DynamicVertexBuffer::Tessellator& tes = DynamicVertexBuffer::get_tessellator();
-		M4x3F32 textTransform;
-		textTransform.set_identity();
-		tes.begin_draw(VK::uiPipeline, VK::uiPipelineLayout, DynamicVertexBuffer::DRAW_MODE_QUADS, textTransform);
-		TextRenderer::draw_string_batched(tes, "duck"a, 0.0F, 0.0F, 0.0F, 10.0F, V4F32{ 1.0F, 1.0f, 1.0F, 1.0F }, VK::UI_RENDER_FLAG_MSDF);
-		tes.end_draw();
+
+		{
+			M4x3F32 textTransform;
+			textTransform.set_identity();
+			File& f = getTerminal();
+			tes.begin_draw(VK::uiPipeline, VK::uiPipelineLayout, DynamicVertexBuffer::DRAW_MODE_QUADS, textTransform);
+			F32 offset = 0.0F;
+			for (ArenaArrayList<char>& s : f) {
+				TextRenderer::draw_string_batched(tes, StrA{ s.data, s.size }, 0.0F, offset, 0.0F, 1.0F, V4F32{ 1.0F, 1.0f, 1.0F, 1.0F }, 0);
+				offset += 0.0F;
+			}
+			tes.end_draw();
+		}
 
 		tes.draw(projView);
 
@@ -273,7 +281,7 @@ void do_frame() {
 	}
 }
 
-void run_cyber_seaquell() {
+void run_cyber_threequell() {
 	if (Win32::pTimeBeginPeriod) {
 		Win32::pTimeBeginPeriod(1);
 	}
@@ -306,6 +314,9 @@ void run_cyber_seaquell() {
 		VK::finish_startup();
 	}
 
+	terminalsInit();
+	openTerminal(0);
+	typeChar(Win32::KEY_0, '0');
 	setup_scene();
 	staticModelsToRender.allocator = &frameArena;
 	skeletalModelsToRender.allocator = &frameArena;
