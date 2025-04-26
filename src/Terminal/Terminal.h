@@ -283,7 +283,7 @@ bool interpretCommand(StrA cmd) {
 
         if (dir.is_empty()) {
             io_print(io, "No directory name specified."a);
-            return;
+            goto skip_mkdir;
         }
         for (DirEntry& e : *wd) {
             if (e.name == dir && e.isDir) {
@@ -335,7 +335,7 @@ bool interpretCommand(StrA cmd) {
 
         if (file.is_empty()) {
             io_print(io, "No file name specified."a);
-            return;
+            goto skip_touch;
         }
         for (DirEntry& e : *wd) {
             if (e.name == file && !e.isDir) {
@@ -417,10 +417,11 @@ void exec(StrA source_filename, StrA out_filename, StrA error_filename) {
     File& out = *getFile(out_filename);
     File& error = *getFile(error_filename);
 
-    //run_program(StrA prog, [](U32 n) { io_print(out, strafmt(globalArena, "%", n)); }, [](StrA str) { io_print(str); });
-}
+    //for (int i = 0; i < source.size; i++) {
+    //    strafmt()
+    //}
 
-void touch() {
+    //run_program(StrA prog, [](U32 n) { io_print(out, strafmt(globalArena, "%", n)); }, [](StrA str) { io_print(str); });
 }
 
 int getLineLen() {

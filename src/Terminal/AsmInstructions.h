@@ -55,7 +55,7 @@ void parse_labels(MemoryArena* mem, StrA* lines, U64 num_lines) {
 			}
 			if (valid) {
 				lines[i].length--;
-				current_state->asm_labels.push_back((asm_label){lines[i], i});
+				current_state->asm_labels.push_back(asm_label{lines[i], i});
 				lines[i].length = 0;
 			}
 		}
