@@ -322,7 +322,7 @@ bool interpretCommand(StrA cmd) {
     } else if (cmd.substr(from, cmdsize) == "clear"a) {
 
     } else {
-        io.push_back(""a)
+        io_print(io, "No such command exists."a);
     }
 
     new_cmd_line();
@@ -331,8 +331,8 @@ bool interpretCommand(StrA cmd) {
 
 void print_help() {
     File& io = wt->io;
-    io.push_back(" >help");
-    io.push_back("  Display this message");
+    io_print(io, " >help"a);
+    io_print(io, "  Display this message"a);
 
     io.push_back(" >clear");
     io.push_back("  Clear the terminal");
