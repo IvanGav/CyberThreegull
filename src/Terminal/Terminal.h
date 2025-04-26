@@ -30,7 +30,7 @@ enum TerminalMode {
 // All terminals
 Terminal ts[6];
 
-// Current terminal state
+// Current terminal state  
 TerminalMode terminalMode; // Current terminal mode
 Terminal* wt; // Working Terminal
 Dir* wd; // Working Directory
@@ -290,6 +290,9 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
     else if (charCode == Win32::KEY_DELETE) {
         delete_key();
     }
+    else if (charCode == Win32::KEY_TAB) {
+        tab();
+    }
     else if (charCode == Win32::KEY_RETURN) {
         return enter_key();
     }
@@ -305,6 +308,65 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
         insert_char(c);
     }
     return false;
+}
+
+void tab() {
+	if (terminalMode == TerminalMode::Input) {
+		return;
+	}
+
+	Dir* currDir = wd; // current Directory
+
+    // Getting the users typed line
+    StrA fullLine = vecToStrA(wf->back());
+	StrA prompt = fullLine.slice(0, 2); // get the prompt
+    StrA currentLine = (fullLine++)++; // removes the prompt
+    ArenaArrayList<char>* updatedLine = wf->back();
+
+	if (currentLine.is_empty()) {
+		// line empty
+		return;
+	}
+    
+	// Finding the section of the line that needs to be autocompleted(tabbed)
+    int indexLastSpace = currentLine.skip(currentLine.find(" ")); // get index of last space, -1 if none
+    StrA inputToTab = (indexLastSpace == -1) ? currentLine : currentLine.slice(indexLastSpace + 1); // actual input to tab
+	int inputToTabSize = inputToTab.size; // size of the input to tab
+    StrA tabbedInput; 
+	
+    ArenaArrayList<StrA> Files{}; // List of matching files
+    for (ArenaArrayList<char>* currFileRaw : File) {
+        StrA currFile = vecToStrA(*currFileRaw); // current file name
+        // Check if the current file name starts with the input
+        if (currFile.starts_with(inputToTab)) {
+            // Found a file that matches the input
+            Files.push_back(currFile); 
+        }
+    }
+
+    // Check if we have matches
+	if (Files.size > 0) {
+		// We have matchee
+		if (Files.size == 1) {
+			// if there is only one match just update the  updatedLine
+			tabbedInput = Files[0].slice(inputToTabSize); // get the rest of the file name
+		}
+		else {
+			// More than one match
+            // IMPLEMENT TODO 
+            tabbedInput = Files[0].slice(inputToTabSize); // get the rest of the file name
+		}
+	}
+    else {
+        // no matches, dont change anything
+        tabbedInput = ""a;
+    }
+
+	updatedLine->push_back(tabbedInput); // add the tabbed input to the line
+	// Update the cursor position
+    curCursorX += tabbedInput.size;
+    makeRightmost();
+
 }
 
 void up_arrow() {
