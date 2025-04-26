@@ -19,7 +19,6 @@ NameTex textureNames[]{
 	{ "Microwave.001"a, "microwave.png"a },
 	{ "Room.001"a, "room.png"a },
 	{ "Terminal.001"a, "Terminal_screen.png"a },
-	{ "Andrew_tate"a, "images/Untitled (15).png"a },
 	{ "Room.002"a, "images/gandr-collage.png"a },
 	{ "Terminal.002"a, "Terminal_screen.png"a },
 	{ "Fridge_2.001"a, "sewer.png"a },
@@ -65,6 +64,7 @@ NameTex textureNames[]{
 	{ "Prompt_Management_Door"a, "Prompt Management Door.png"a },
 	{ "Terminal.003"a, "Terminal_screen.png"a },
 	{ "Trolley_Sign"a, "images/trolley problem.png"a },
+	{ "Andrew_tate"a, "images/Untitled (15).png"a }
 };
 
 struct NameColor {

@@ -469,13 +469,14 @@ FINLINE F32 length_sq(V3F32 v) {
 	return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 FINLINE F32 distance_sq(V3F32 a, V3F32 b) {
-	return (a.x - b.x) * (a.y - b.y) * (a.z - b.z);
+	V3F32 d = a - b;
+	return d.x * d.x + d.y * d.y + d.z * d.z;
 }
 FINLINE F32 length(V3F32 v) {
 	return sqrtf32(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 FINLINE F32 distance(V3F32 a, V3F32 b) {
-	return sqrtf32((a.x - b.x) * (a.y - b.y) * (a.z - b.z));
+	return length(a - b);
 }
 FINLINE V3F32 normalize(V3F32 v) {
 	F32 invLen = 1.0F / sqrtf32(v.x * v.x + v.y * v.y + v.z * v.z);
@@ -1390,7 +1391,7 @@ F32 ray_intersect_plane(V3F32 planePoint, V3F32 planeNorm, V3F32 rayOrigin, V3F3
 V2F32 ray_intersect_rect(V3F32 rectOrigin, V3F32 rectXAxis, V3F32 rectYAxis,  V3F32 rayOrigin, V3F32 rayDir) {
 	F32 intersected = ray_intersect_plane(rectOrigin, cross(rectXAxis, rectYAxis), rayOrigin, rayDir);
 	V3F32 planePoint = rayOrigin + rayDir * intersected;
-	return V2F32{ dot(planePoint, rectXAxis) / length_sq(rectXAxis), dot(planePoint, rectYAxis) / length_sq(rectYAxis) };
+	return V2F32{ dot(planePoint - rectOrigin, rectXAxis) / length_sq(rectXAxis), dot(planePoint - rectOrigin, rectYAxis) / length_sq(rectYAxis) };
 }
 
 DEBUG_OPTIMIZE_OFF
