@@ -47,6 +47,15 @@ TermInterface terms[]{
 	{ { 10.2617F,0.801399F,-191.534F }, {10.2707F,2.60869F,-191.534F}, {10.2707F, 0.801399F, -188.907F} }
 };
 
+V2F32 screenDims[] = {
+		V2F32{1.3324724435806274, 0.9167219996452332},
+		V2F32{5.2078046798706055, 3.582930088043213},
+		V2F32{2.1184375286102295, 1.4574799537658691},
+		V2F32{2.38411808013916, 1.6406699419021606},
+		V2F32{2.33441162109375, 1.6056979894638062},
+		V2F32{2.627014398574829, 1.807313442230224}
+};
+
 struct LineCollider {
 	V2F32 a;
 	V2F32 b;
@@ -72,6 +81,7 @@ struct Player {
 	V2F32 forward;
 	V2F32 right;
 	V3F32 raycastForward;
+	V3F32 eye;
 	F32 yaw;
 	F32 pitch;
 	F32 radius;
@@ -110,6 +120,21 @@ void keyboard_callback(Win32::Key key, Win32::ButtonState state) {
 }
 void mouse_callback(Win32::MouseButton button, Win32::MouseValue state) {
 	V2F32 mousePos = Win32::get_mouse();
+	if (button == Win32::MOUSE_BUTTON_WHEEL && inTerminalIdx != -1) {
+		scrollInput(state.scroll);
+	}
+	if (button == Win32::MOUSE_BUTTON_LEFT && state.state == Win32::BUTTON_STATE_DOWN) {
+		V3F32 x = terms[inTerminalIdx].p3 - terms[inTerminalIdx].p1;
+		V3F32 y = terms[inTerminalIdx].p2 - terms[inTerminalIdx].p1;
+		V2F32 interT = ray_intersect_rect(terms[inTerminalIdx].p1, x, y, player.eye, player.raycastForward);
+		if (interT.x >= 0.0F && interT.y >= 0.0F && interT.x <= 1.0F && interT.y <= 1.0F) {
+			F32 fontSize = length(terms[inTerminalIdx].p2 - terms[inTerminalIdx].p1) * 0.05F;
+			F32 charSize = TextRenderer::length_size_x(1, fontSize);
+			F32 width = screenDims[inTerminalIdx].x / charSize;
+			F32 height = screenDims[inTerminalIdx].y / fontSize;
+			//clickAt(int(width * interT.x), int(height * interT.y));
+		}
+	}
 }
 
 void draw_static_model(VKGeometry::StaticModel& model) {
@@ -270,6 +295,7 @@ void do_frame() {
 		F32 size = length(terms[inTerminalIdx].p3 - terms[inTerminalIdx].p1);
 		playerEye = playerEye + normalize(cross(terms[inTerminalIdx].p3 - terms[inTerminalIdx].p1, terms[inTerminalIdx].p2 - terms[inTerminalIdx].p1)) * size * 0.5F;
 	}
+	player.eye = playerEye;
 	view.translate(-playerEye);
 
 	ProjectiveTransformMatrix projView;
@@ -380,11 +406,16 @@ void do_frame() {
 			textTransform.transpose_rotation();
 			File& f = getTerminal();
 			tes.begin_draw(VK::uiPipeline, VK::uiPipelineLayout, DynamicVertexBuffer::DRAW_MODE_QUADS, textTransform);
-			F32 offset = 0.0F;
 			F32 fontSize = length(terms[inTerminalIdx].p2 - terms[inTerminalIdx].p1) * 0.05F;
+			F32 scrollOffset = -getOffset(screenDims[inTerminalIdx].y / fontSize) * fontSize;
+			F32 offset = scrollOffset;
 			for (ArenaArrayList<char>& s : f) {
 				TextRenderer::draw_string_batched(tes, StrA{ s.data, s.size }, 0.03F, offset, 0.0F, fontSize, V4F32{ 0.0F, 0.0f, 0.0F, 1.0F }, inTerminalIdx << 1);
 				offset += fontSize;
+			}
+			printf("%\n"a, cursorY());
+			if (U32(totalTime * 2) & 1) {
+				TextRenderer::draw_string_batched(tes, "|"a, 0.03F + TextRenderer::length_size_x(cursorX(), fontSize) - TextRenderer::length_size_x(1, fontSize) * 0.5F, cursorY() * fontSize + scrollOffset, 0.0F, fontSize, V4F32{0.0F, 0.0f, 0.0F, 1.0F}, inTerminalIdx << 1);
 			}
 			tes.end_draw();
 		}
