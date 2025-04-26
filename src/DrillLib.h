@@ -274,7 +274,7 @@ struct ArenaArrayList {
 	U32 size;
 	U32 capacity;
 
-	FINLINE T operator[](I64 pos) const {
+	FINLINE T& operator[](I64 pos) const {
 		return data[pos < 0 ? size + pos : pos];
 	}
 
@@ -671,6 +671,7 @@ struct StrA {
 			return result;
 		}
 	}
+
 	FINLINE bool operator==(const StrA& other) const {
 		return length == other.length && memcmp(str, other.str, length) == 0;
 	}
