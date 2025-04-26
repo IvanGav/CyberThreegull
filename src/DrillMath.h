@@ -469,13 +469,14 @@ FINLINE F32 length_sq(V3F32 v) {
 	return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 FINLINE F32 distance_sq(V3F32 a, V3F32 b) {
-	return (a.x - b.x) * (a.y - b.y) * (a.z - b.z);
+	V3F32 d = a - b;
+	return d.x * d.x + d.y * d.y + d.z * d.z;
 }
 FINLINE F32 length(V3F32 v) {
 	return sqrtf32(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 FINLINE F32 distance(V3F32 a, V3F32 b) {
-	return sqrtf32((a.x - b.x) * (a.y - b.y) * (a.z - b.z));
+	return length(a - b);
 }
 FINLINE V3F32 normalize(V3F32 v) {
 	F32 invLen = 1.0F / sqrtf32(v.x * v.x + v.y * v.y + v.z * v.z);
