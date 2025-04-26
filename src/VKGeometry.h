@@ -42,11 +42,12 @@ struct StaticScene {
 	}
 	void draw_named(VkCommandBuffer cmdBuf, StrA name) {
 		for (U32 i = 0; i < elementCount; i++) {
-			if (elements[i].name == name) {
+			if (elements[i].name==name) {
 				VK::vkCmdDrawIndexed(cmdBuf, elements[i].mesh.indicesCount, 1, elements[i].mesh.indicesOffset, I32(elements[i].mesh.verticesOffset), 0);
-				break;
+				return;
 			}
 		}
+		__debugbreak();
 	}
 };
 
