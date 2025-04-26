@@ -186,6 +186,7 @@ void terminalsInit() {
 void openTerminal(int terminal) {
     terminalMode = TerminalMode::Cmd;
     wt = &ts[terminal];
+    wd = &wt->root;
     wf = &wt->io;
     curCursorX = 2;
     curCursorY = wf->size - 1;
@@ -304,33 +305,36 @@ void io_print(File& f, StrA s) {
 
 // Given a command, interpret it. Return false.
 bool interpretCommand(StrA cmd) {
-    cmd++; cmd++;
     int from = 0;
     int cmdsize;
     seek(cmd, from, cmdsize);
 
     File& io = wt->io;
     
-    if (cmd.substr(from, cmdsize) == "dir"a || cmd.substr(from, cmdsize) == "l"a) {
+    if (cmd.substr(0, cmdsize) == "dir"a || cmd.substr(0, cmdsize) == "l"a) {
         print_dir();
-    } else if (cmd.substr(from, cmdsize) == "help"a) {
+    } else if (cmd.substr(0, cmdsize) == "help"a) {
         print_help();
-    } else if (cmd.substr(from, cmdsize) == "vim"a) {
+    } else if (cmd.substr(0, cmdsize) == "vim"a) {
 
-    } else if (cmd.substr(from, cmdsize) == "mkdir"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "cat"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "exit"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "pwd"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "exec"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "touch"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "clear"a) {
-
+    } else if (cmd.substr(0, cmdsize) == "mkdir"a) {
+        mkdir();
+    } else if (cmd.substr(0, cmdsize) == "cat"a) {
+        cat();
+    } else if (cmd.substr(0, cmdsize) == "exit"a) {
+        exit();
+    } else if (cmd.substr(0, cmdsize) == "pwd"a) {
+        pwd();
+    } else if (cmd.substr(0, cmdsize) == "cd"a) {
+        seek(cmd, from, cmdsize);
+        StrA dir{cmd.str+from-cmdsize, cmdsize};
+        change_dir(dir);
+    } else if (cmd.substr(0, cmdsize) == "exec"a) {
+        exec();
+    } else if (cmd.substr(0, cmdsize) == "touch"a) {
+        touch();
+    } else if (cmd.substr(0, cmdsize) == "clear"a) {
+        clear();
     } else {
         io_print(io, "No such command exists."a);
     }
@@ -478,7 +482,8 @@ void touch() {
 void clear() {
 	File& io = wt->io;
 	io.clear();
-	io.push_back(strAToVec(PROMPT));
+    //new_cmd_line();
+	//io.push_back(strAToVec(PROMPT));
 }
 
 int getLineLen() {
@@ -582,7 +587,6 @@ void set_cur_terminal_line() {
     wt->io.back().push_back_n(data.data, data.size);
 
     curCursorY = wt->io.size - 1;
-    editingHistory = wt->history.size - 1;
     make_rightmost();
 }
 
@@ -590,6 +594,7 @@ void set_cur_terminal_line() {
 void new_cmd_line() {
     wt->history.push_back(ArenaArrayList<char>{});
     wt->io.push_back(ArenaArrayList<char>{});
+    editingHistory = wt->history.size - 1;
     set_cur_terminal_line();
 }
 
