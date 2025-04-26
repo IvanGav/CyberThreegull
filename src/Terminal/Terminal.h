@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Win32.h"
+#include "asm.h"
 
 #define PROMPT " >"a
 #define PROMPT_LEN 2
@@ -59,8 +60,6 @@ int editingHistory; // Which item in terminal history is being edited; will be a
 */
 
 // From the outside of the file, use these functions
-char getCharFromConsole();
-void runVirtualTerminal();
 void terminalsInit();
 void openTerminal(int terminal);
 File& getTerminal();
@@ -82,7 +81,7 @@ void print_help();
 void vim();
 void mkdir();
 void cat();
-void exec();
+void exec(StrA source, StrA out, StrA error);
 void touch();
 int getLineLen();
 void create_file(StrA name, bool isDir);
@@ -114,6 +113,7 @@ bool enter_key();
 
 // Call before using terminals
 void terminalsInit() {
+    init_asm();
     for (int i = 0; i < 6; i++) {
         ts[i].history = {};
         ts[i].root = {};
@@ -278,7 +278,21 @@ bool interpretCommand(StrA cmd) {
             io_print(io, "File not found."a);
         }
     } else if (cmd.substr(0, cmdsize) == "mkdir"a) {
-        mkdir();
+        int dirname_from = seek(cmd, from, cmdsize);
+        StrA dir = cmd.substr(dirname_from, cmdsize);
+
+        if (dir.is_empty()) {
+            io_print(io, "No directory name specified."a);
+            return;
+        }
+        for (DirEntry& e : *wd) {
+            if (e.name == dir && e.isDir) {
+                io_print(io, "Directory already exists."a);
+                goto skip_mkdir;
+            }
+        }
+        create_file(dir, true);
+        skip_mkdir:;
     } else if (cmd.substr(0, cmdsize) == "cat"a) {
         int filename_from = seek(cmd, from, cmdsize);
         StrA file = cmd.substr(filename_from, cmdsize);
@@ -302,15 +316,27 @@ bool interpretCommand(StrA cmd) {
     } else if (cmd.substr(0, cmdsize) == "pwd"a) {
         
     } else if (cmd.substr(0, cmdsize) == "cd"a) {
-        seek(cmd, from, cmdsize);
-        StrA dir{cmd.str+from-cmdsize, cmdsize};
+        int dirname_from = seek(cmd, from, cmdsize);
+        StrA dir = cmd.substr(dirname_from, cmdsize);
+
         change_dir(dir);
     } else if (cmd.substr(0, cmdsize) == "exec"a) {
-        exec();
+        int source_from = seek(cmd, from, cmdsize);
+        StrA source = cmd.substr(source_from, cmdsize);
+        int out_from = seek(cmd, from, cmdsize);
+        StrA out = cmd.substr(out_from, cmdsize);
+        int error_from = seek(cmd, from, cmdsize);
+        StrA error = cmd.substr(error_from, cmdsize);
+
+        exec(source, out, error);
     } else if (cmd.substr(0, cmdsize) == "touch"a) {
         int filename_from = seek(cmd, from, cmdsize);
         StrA file = cmd.substr(filename_from, cmdsize);
 
+        if (file.is_empty()) {
+            io_print(io, "No file name specified."a);
+            return;
+        }
         for (DirEntry& e : *wd) {
             if (e.name == file && !e.isDir) {
                 io_print(io, "File already exists."a);
@@ -368,25 +394,6 @@ void vim() {
 }
 
 void mkdir() {
-	File& io = wt->io;
-    int cmdsize = 5;
-	int from = 0;
-	ArenaArrayList<char> cmd = wt->history.back();
-	StrA cmdStr = vecToStrA(cmd);
-	seek(cmdStr, from, cmdsize);
-	StrA dir = vecToStrA(wt->history.back()).substr(cmdsize,cmdStr.length - 1);
-
-	if (dir.is_empty()) {
-		io_print(io, "No directory name specified."a);
-		return;
-	}
-	for (DirEntry& e : *wd) {
-		if (e.name == dir && e.isDir) {
-			io_print(io, "Directory already exists."a);
-			return;
-		}
-	}
-	create_file(dir, true);
 }
 
 
@@ -394,8 +401,23 @@ void mkdir() {
 void cat() {
 }
 
-void exec() {
+File* getFile(StrA name) {
+    for (DirEntry& e : *wd) {
+        if (e.name == name && !e.isDir) {
+            return e.file;
+        }
+    }
+    return nullptr;
+}
 
+void exec(StrA source_filename, StrA out_filename, StrA error_filename) {
+    //TODO: check for bad filenames
+    StrA prog{};
+    File& source = *getFile(source_filename);
+    File& out = *getFile(out_filename);
+    File& error = *getFile(error_filename);
+
+    //run_program(StrA prog, [](U32 n) { io_print(out, strafmt(globalArena, "%", n)); }, [](StrA str) { io_print(str); });
 }
 
 void touch() {
