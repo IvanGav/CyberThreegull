@@ -394,7 +394,25 @@ void print_help() {
 }
 
 void vim() {
+    File& io = wt->io;
+    int cmdsize = 3;
+    int from = 0;
+    ArenaArrayList<char> cmd = wt->history.back();
+    StrA cmdStr = vecToStrA(cmd);
+    seek(cmdStr, from, cmdsize);
+    StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
 
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+
+	for (DirEntry& e : *wd) {
+        if (open_file(file)) {
+            return;
+        }
+	}
+    io_print(io, "File not found."a);
 }
 
 void mkdir() {
@@ -447,15 +465,7 @@ bool exit() {
 }
 
 void pwd() {
-	File& io = wt->io;
-	StrA path = ""a;
-	Dir* cur_dir = wd;
-	while (cur_dir != nullptr) {
-		path = add_two_stra(add_two_stra(cur_dir->data[0].name, "/"a),path);
-		cur_dir = get_dir(cur_dir->data[0].name);
-	}
 
-	io_print(io, path);
 
 }
 
@@ -527,6 +537,7 @@ bool open_file(StrA file) {
         if (e.name == file && !e.isDir) {
             wf = e.file;
             curCursorX = getLineLen();
+            curCursorY = 0;
             curOffset = -1;
             terminalMode = TerminalMode::Editor;
             return true;
