@@ -38,7 +38,14 @@ struct TermInterface {
 	V3F32 p3;
 };
 
-TermInterface term0{ {-5.78971F,0.07619F,-5.27076F}, {-5.78971F,0.992912F,-5.27076F}, {-5.1248F, 0.07619F, -6.42548F} };
+TermInterface terms[]{
+	{ {-5.78971F,0.07619F,-5.27076F}, {-5.78971F,0.992912F,-5.27076F}, {-5.1248F, 0.07619F, -6.42548F} },
+	{ { -11.0766F,1.00519F,-21.1994F }, {-11.0766F,4.58812F,-21.1994F}, {-15.2958F, 1.00519F, -24.2522F} },
+	{ { 12.2575F,1.96685F,-79.5226F }, {12.2575F,3.42433F,-79.5226F}, {11.2836F, 1.96685F, -77.6413F} },
+	{ { -10.8436F,1.54681F,-116.36F }, {-10.8436F,3.18748F,-116.36F}, {-9.57885F, 1.54681F, -118.381F} },
+	{ { 9.34218F,-0.314458F,-140.947F }, {9.34219F,1.29124F,-140.947F}, {8.24408F, -0.314458F, -138.887F} },
+	{ { 10.2617F,0.801399F,-191.534F }, {10.2707F,2.60869F,-191.534F}, {10.2707F, 0.801399F, -188.907F} }
+};
 
 struct LineCollider {
 	V2F32 a;
@@ -64,6 +71,7 @@ struct Player {
 	V2F32 velocity;
 	V2F32 forward;
 	V2F32 right;
+	V3F32 raycastForward;
 	F32 yaw;
 	F32 pitch;
 	F32 radius;
@@ -90,10 +98,13 @@ void keyboard_callback(Win32::Key key, Win32::ButtonState state) {
 		}
 	}
 	if (key == Win32::KEY_E && state == Win32::BUTTON_STATE_DOWN && inTerminalIdx == -1) {
-		V2F32 interT1 = ray_intersect_rect(term0.p1, term0.p3 - term0.p1, term0.p2 - term0.p1, V3F32{ player.pos.x, 0.5F, player.pos.y }, V3F32{ player.forward.x, 0.0F, player.forward.y });
-		if (interT1.x >= 0.0F && interT1.y >= 0.0F && interT1.x <= 1.0F && interT1.y <= 1.0F) {
-			openTerminal(0);
-			inTerminalIdx = 0;
+		for (U32 i = 0; i < ARRAY_COUNT(terms); i++) {
+			V2F32 interT = ray_intersect_rect(terms[i].p1, terms[i].p3 - terms[i].p1, terms[i].p2 - terms[i].p1, V3F32{player.pos.x, 0.5F, player.pos.y}, player.raycastForward);
+			if (interT.x >= 0.0F && interT.y >= 0.0F && interT.x <= 1.0F && interT.y <= 1.0F) {
+				openTerminal(i);
+				inTerminalIdx = i;
+				break;
+			}
 		}
 	}
 }
@@ -165,7 +176,7 @@ void setup_scene() {
 }
 
 void draw_world() {
-	for (LineCollider& c : colliders) {
+	/*for (LineCollider& c : colliders) {
 		for (U32 i = 0; i <= 5; i++) {
 			VKGeometry::StaticModel model;
 			VKGeometry::make_static_model(&model, Resources::cubeMesh);
@@ -175,15 +186,15 @@ void draw_world() {
 			model.color = V4F32{ 1.0F, 0.0F, 0.0F, 1.0F};
 			draw_static_model(model);
 		}
-	}
-	{
+	}*/
+	/*{
 		VKGeometry::StaticModel model;
 		VKGeometry::make_static_model(&model, Resources::cubeMesh);
 		model.transform.translate(term0.p1);
 		model.transform.scale({ 0.1F, 0.1F, 0.1F });
 		model.color = V4F32{ 1.0F, 0.0F, 0.0F, 1.0F };
 		draw_static_model(model);
-	}
+	}*/
 }
 
 void update_world() {
@@ -192,6 +203,7 @@ void update_world() {
 	player.pitch = clamp(player.pitch + deltaMouse.y, -0.2499F, 0.2499F);
 	player.forward = V2F32{ sinf32(player.yaw), -cosf32(player.yaw) };
 	player.right = V2F32{ sinf32(player.yaw + 0.25F), -cosf32(player.yaw + 0.25F) };
+	player.raycastForward = V3F32{ sinf32(player.yaw) * cosf32(player.pitch), -sinf32(player.pitch), -cosf32(player.yaw) * cosf32(player.pitch) };
 	player.velocity = {};
 	
 	if (inTerminalIdx == -1) {
@@ -252,7 +264,13 @@ void do_frame() {
 	view.set_identity();
 	view.rotate_axis_angle(V3F32{ 1.0F, 0.0F, 0.0F }, -player.pitch);
 	view.rotate_axis_angle(V3F32{ 0.0F, 1.0F, 0.0F }, -player.yaw);
-	view.translate(-V3F32{ player.pos.x, 0.5F, player.pos.y });
+	V3F32 playerEye{ player.pos.x, 0.5F, player.pos.y };
+	if (inTerminalIdx != -1) {
+		playerEye = 0.5F * (terms[inTerminalIdx].p1 + terms[inTerminalIdx].p3) + 0.5F * (terms[inTerminalIdx].p2 - terms[inTerminalIdx].p1);
+		F32 size = length(terms[inTerminalIdx].p3 - terms[inTerminalIdx].p1);
+		playerEye = playerEye + normalize(cross(terms[inTerminalIdx].p3 - terms[inTerminalIdx].p1, terms[inTerminalIdx].p2 - terms[inTerminalIdx].p1)) * size * 0.5F;
+	}
+	view.translate(-playerEye);
 
 	ProjectiveTransformMatrix projView;
 	projView.generate(proj, view);
@@ -350,20 +368,23 @@ void do_frame() {
 
 		DynamicVertexBuffer::Tessellator& tes = DynamicVertexBuffer::get_tessellator();
 
-		{
+		if (inTerminalIdx != -1) {
 			M4x3F32 textTransform;
 			textTransform.set_identity();
-			textTransform.translate(term0.p2);
-			textTransform.set_row(0, -normalize(term0.p3 - term0.p1));
-			textTransform.set_row(1, normalize(term0.p2 - term0.p1));
+			V3F32 v1 = -normalize(terms[inTerminalIdx].p3 - terms[inTerminalIdx].p1);
+			V3F32 v2 = normalize(terms[inTerminalIdx].p2 - terms[inTerminalIdx].p1);
+			textTransform.translate(terms[inTerminalIdx].p2 - cross(v1, v2) * 0.01F);
+			textTransform.set_row(0, v1);
+			textTransform.set_row(1, v2);
 			textTransform.set_row(2, V3F32{0.0F, 0.0F, 1.0F});
 			textTransform.transpose_rotation();
 			File& f = getTerminal();
 			tes.begin_draw(VK::uiPipeline, VK::uiPipelineLayout, DynamicVertexBuffer::DRAW_MODE_QUADS, textTransform);
 			F32 offset = 0.0F;
+			F32 fontSize = length(terms[inTerminalIdx].p2 - terms[inTerminalIdx].p1) * 0.05F;
 			for (ArenaArrayList<char>& s : f) {
-				TextRenderer::draw_string_batched(tes, StrA{ s.data, s.size }, 0.03F, offset, -0.01F, 0.05F, V4F32{ 0.0F, 0.0f, 0.0F, 1.0F }, 0);
-				offset += 0.05F;
+				TextRenderer::draw_string_batched(tes, StrA{ s.data, s.size }, 0.03F, offset, 0.0F, fontSize, V4F32{ 0.0F, 0.0f, 0.0F, 1.0F }, inTerminalIdx << 1);
+				offset += fontSize;
 			}
 			tes.end_draw();
 		}
@@ -429,6 +450,7 @@ void run_cyber_threequell() {
 
 	while (!Win32::windowShouldClose) {
 		Win32::poll_events();
+		Win32::pSetCursor(NULL);
 		do_frame();
 	}
 
