@@ -64,6 +64,7 @@ bool interpretCommand(StrA cmd);
 int getLineLen();
 void createFile(StrA name, bool isDir);
 bool rightmost();
+void setCurTerminalLine();
 
 /*
     API
@@ -174,8 +175,6 @@ StrA vecToStrA(ArenaArrayList<char> list) {
     Internal
 */
 
-
-
 // Given a command, interpret it. Return false.
 bool interpretCommand(StrA cmd) {
     int from = 0;
@@ -214,6 +213,7 @@ bool closeFile() {
     curCursorX = 2;
     curCursorY = wf->size - 1;
     curOffset = -1;
+    terminalMode = TerminalMode::Normal;
     return true;
 }
 
@@ -224,6 +224,7 @@ bool openFile(StrA file) {
             wf = e.file;
             curCursorX = getLineLen();
             curOffset = -1;
+            terminalMode = TerminalMode::Input;
             return true;
         }
     }
@@ -231,17 +232,40 @@ bool openFile(StrA file) {
 }
 
 // Change dir. Return true if the dir was found (and changed to).
-// TODO: not finished
 bool changeDir(StrA dir) {
     for (DirEntry& e : *wd) {
-        if (e.name == file && !e.isDir) {
-            wf = e.file;
-            curCursorX = getLineLen();
-            curOffset = -1;
+        if (e.name == dir && e.isDir) {
+            wd = e.dir;
             return true;
         }
     }
     return false;
+}
+
+// Get a directory that's indicated by the path. Return nullptr if it doesn't exist.
+Dir* getDir(StrA path) {
+    Dir* cur_dir = wd;
+    MemoryArena& arena = get_scratch_arena();
+    MEMORY_ARENA_FRAME(arena) {
+        U64 num;
+        StrA* path_split = path.split(arena, &num, "/"a);
+
+        // for every dir in path specified
+        for (int i = 0; i < num; i++) {
+            // for every file in the dir
+            for (DirEntry& e : *cur_dir) {
+                if (e.name == path_split[i] && e.isDir) {
+                    cur_dir = e.dir;
+                    goto next;
+                }
+            }
+            cur_dir = nullptr; // the loop ended without switching to a new dir - not found
+            goto ret;
+            next:;
+        }
+        ret:;
+    }
+    return cur_dir;
 }
 
 //return true if cursor is currently the rightmost of the line
@@ -249,20 +273,29 @@ bool rightmost() {
     return getLineLen() == curCursorX;
 }
 
-//when in a terminal, set the latest line to be the correct selected (history) command
-void setCurTerminalLine() {
-    get_cur_file()[curCursorY] = get_prompt() + ts[curTerminal].history[editingHistory];
+// make cursor rightmost in current line
+void makeRightmost() {
+    curCursorX = getLineLen();
 }
 
-void newCmdLine() {
-    wf->push_back(get_prompt());
-    wt->history.push_back("");
-    //if the last history line is empty, don't make a new empty line, reuse
-    if (ts[curTerminal].history[ts[curTerminal].history.size() - 1] != "") ts[curTerminal].history.push_back("");
+//when in a terminal, set the latest line to be the correct selected (history) command
+void setCurTerminalLine() {
+    wt->history.back().clear();
+    ArenaArrayList data = wt->history.data[editingHistory];
+    wt->history.back().push_back_n(data.data, data.size);
+}
 
-    curCursorY = get_cur_file().size() - 1;
+// assuming that `wt` is history, put a blank cmd line
+void newCmdLine() {
+    //if the last history line is empty, don't make a new empty line
+    if (wt->history.back().size > 2) {
+        wt->history.push_back(ArenaArrayList<char>{});
+    }
+    wt->history.back().push_back(' ', '>');
     curCursorX = 2;
-    editingHistory = ts[curTerminal].history.size() - 1;
+    curCursorY = wt->history.size - 1;
+    editingHistory = wt->history.size - 1;
+    setCurTerminalLine();
 }
 
 /*
@@ -274,41 +307,32 @@ void newCmdLine() {
 bool interpret_typed_character(Win32::Key charCode, char c) {
     if (charCode == Win32::KEY_UP) {
         up_arrow();
-    }
-    else if (charCode == Win32::KEY_DOWN) {
+    } else if (charCode == Win32::KEY_DOWN) {
         down_arrow();
-    }
-    else if (charCode == Win32::KEY_LEFT) {
+    } else if (charCode == Win32::KEY_LEFT) {
         left_arrow();
-    }
-    else if (charCode == Win32::KEY_RIGHT) {
+    } else if (charCode == Win32::KEY_RIGHT) {
         right_arrow();
-    }
-    else if (charCode == Win32::KEY_BACKSPACE) {
+    } else if (charCode == Win32::KEY_BACKSPACE) {
         backspace_key();
-    }
-    else if (charCode == Win32::KEY_DELETE) {
+    } else if (charCode == Win32::KEY_DELETE) {
         delete_key();
-    }
-    else if (charCode == Win32::KEY_RETURN) {
+    } else if (charCode == Win32::KEY_RETURN) {
         return enter_key();
-    }
-    else if (charCode == Win32::KEY_ESC) {
-        if (curFile != 0) {
-            change_file(0);
-        }
-        else {
+    } else if (charCode == Win32::KEY_ESC) {
+        if (terminalMode == TerminalMode::Normal) {
             return true;
+        } else {
+            closeFile();
         }
-    }
-    else if (c != '\0') {
+    } else if (c != '\0') {
         insert_char(c);
     }
     return false;
 }
 
 void up_arrow() {
-    if (curFile == 0) {
+    if (terminalMode == TerminalMode::Normal) {
         //in terminal
         if (editingHistory == 0) return;
         editingHistory--;
