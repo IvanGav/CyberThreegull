@@ -45,6 +45,8 @@ Terminal* wt; // Working Terminal
 Dir* wd; // Working Directory
 File* wf; // Working File - the file that's
 
+ArenaArrayList<StrA> pwd; // keep the current dir tree from root
+
 int curOffset; //will be -1 if none yet
 int curCursorX;
 int curCursorY;
@@ -76,15 +78,11 @@ StrA fileToStrA(File& f);
 void io_print(File& f, StrA s);
 ArenaArrayList<char> strAToVec(StrA s);
 bool interpretCommand(StrA cmd);
-void print_dir();
 void print_help();
 void mkdir();
 void cat();
-bool exit();
-void pwd();
 void exec();
 void touch();
-void clear();
 int getLineLen();
 void create_file(StrA name, bool isDir);
 bool close_file();
@@ -299,6 +297,11 @@ void io_print(File& f, StrA s) {
     f.push_back(strAToVec(s));
 }
 
+void io_print(File& f, StrA s, StrA s2) {
+    f.push_back(strAToVec(s));
+    f.back().push_back_n(s2.str, s2.length);
+}
+
 /*
     Internal
 */
@@ -312,7 +315,17 @@ bool interpretCommand(StrA cmd) {
     File& io = wt->io;
     
     if (cmd.substr(0, cmdsize) == "dir"a || cmd.substr(0, cmdsize) == "l"a) {
-        print_dir();
+        if (wd->size == 0) {
+            io_print(io, "No files in this directory."a);
+            return;
+        }
+        for (DirEntry& e : *wd) {
+            if (e.isDir) {
+                io_print(io, e.name, "/"a);
+            } else {
+                io_print(io, e.name);
+            }
+        }
     } else if (cmd.substr(0, cmdsize) == "help"a) {
         print_help();
     } else if (cmd.substr(0, cmdsize) == "vim"a) {
@@ -322,7 +335,7 @@ bool interpretCommand(StrA cmd) {
     } else if (cmd.substr(0, cmdsize) == "cat"a) {
         cat();
     } else if (cmd.substr(0, cmdsize) == "exit"a) {
-        exit();
+        return true;
     } else if (cmd.substr(0, cmdsize) == "pwd"a) {
         pwd();
     } else if (cmd.substr(0, cmdsize) == "cd"a) {
@@ -334,29 +347,14 @@ bool interpretCommand(StrA cmd) {
     } else if (cmd.substr(0, cmdsize) == "touch"a) {
         touch();
     } else if (cmd.substr(0, cmdsize) == "clear"a) {
-        clear();
+        File& io = wt->io;
+        io.clear();
     } else {
         io_print(io, "No such command exists."a);
     }
 
     new_cmd_line();
     return false;
-}
-
-void print_dir() {
-	File& io = wt->io;
-	if (wd->size == 0) {
-		io_print(io, "No files in this directory."a);
-		return;
-	}
-	for (DirEntry& e : *wd) {
-		if (e.isDir) {
-			io_print(io, e.name);
-		}
-		else {
-			io_print(io, e.name);
-		}
-	}
 }
 
 void print_help() {
@@ -436,23 +434,19 @@ void cat() {
 	}
 	io_print(io, "File not found."a);
 }
-
-bool exit() {
-    return true;
-}
-
-void pwd() {
-	File& io = wt->io;
-	StrA path = ""a;
-	for (int i = 0; i < wd->size; i++) {
-		path = add_two_stra(path, wd->data[i].name);
-		if (i != wd->size - 1) {
-            path = add_two_stra(path, "/"a);
-		}
-	}
-	io_print(io, path);
-
-}
+//
+//void pwd() {
+//	File& io = wt->io;
+//	StrA path = ""a;
+//	for (int i = 0; i < wd->size; i++) {
+//		path = add_two_stra(path, wd->data[i].name);
+//		if (i != wd->size - 1) {
+//            path = add_two_stra(path, "/"a);
+//		}
+//	}
+//	io_print(io, path);
+//
+//}
 
 void exec() {
 
@@ -477,13 +471,6 @@ void touch() {
 		}
 	}
 	create_file(file, false);
-}
-
-void clear() {
-	File& io = wt->io;
-	io.clear();
-    //new_cmd_line();
-	//io.push_back(strAToVec(PROMPT));
 }
 
 int getLineLen() {
@@ -548,12 +535,19 @@ Dir* get_dir(StrA path) {
     Dir* cur_dir = wd;
     MemoryArena& arena = get_scratch_arena();
     MEMORY_ARENA_FRAME(arena) {
+        ArenaArrayList<StrA> pwd_local{}; pwd_local.copy_from(pwd);
         U64 num;
         StrA* path_split = path.split(arena, &num, "/"a);
 
         // for every dir in path specified
         for (int i = 0; i < num; i++) {
             // for every file in the dir
+            if (path_split[i] == ".."a) {
+                if (pwd_local.size == 0) {
+                    return nullptr;
+                }
+                pwd_local.pop_back();
+            }
             for (DirEntry& e : *cur_dir) {
                 if (e.name == path_split[i] && e.isDir) {
                     cur_dir = e.dir;
