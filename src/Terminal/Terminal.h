@@ -59,6 +59,7 @@ void scrollInput(F32 scroll);
 
 // These functions are internal
 int seek(StrA str, int& from, int& len);
+StrA vecToStrA(ArenaArrayList<char> list);
 bool interpretCommand(StrA cmd);
 int getLineLen();
 void createFile(StrA name, bool isDir);
@@ -163,9 +164,17 @@ int seek(StrA str, int& from, int& len) {
     return from_old;
 }
 
+// Return a StrA slice of `list`
+StrA vecToStrA(ArenaArrayList<char> list) {
+    ArenaArrayList<char> b = list;
+    return { b.data, b.size };
+}
+
 /*
     Internal
 */
+
+
 
 // Given a command, interpret it. Return false.
 bool interpretCommand(StrA cmd) {
