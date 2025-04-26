@@ -407,11 +407,11 @@ void vim() {
 		return;
 	}
 
-	for (DirEntry& e : *wd) {
-        if (open_file(file)) {
-            return;
-        }
-	}
+    if (open_file(file)) {
+        return;
+    }
+
+
     io_print(io, "File not found."a);
 }
 
@@ -535,12 +535,14 @@ bool close_file() {
 bool open_file(StrA file) {
     for (DirEntry& e : *wd) {
         if (e.name == file && !e.isDir) {
-            wf = e.file;
-            curCursorX = getLineLen();
-            curCursorY = 0;
-            curOffset = -1;
-            terminalMode = TerminalMode::Editor;
-            return true;
+            if (e.name == file && !e.isDir) {
+                wf = e.file;
+                curCursorX = getLineLen();
+                curCursorY = 0;
+                curOffset = -1;
+                terminalMode = TerminalMode::Editor;
+                return true;
+            }
         }
     }
     return false;
@@ -699,7 +701,7 @@ void tab_key() {
 	if (terminalMode == TerminalMode::Editor) {
 		return;
 	}
-	if (wf->back().size > PROMPT_LEN) {
+	if (wf->back().size <= PROMPT_LEN) {
 		// line empty
 		return;
 	}
