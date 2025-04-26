@@ -78,6 +78,7 @@ ArenaArrayList<char> strAToVec(StrA s);
 bool interpretCommand(StrA cmd);
 void print_dir();
 void print_help();
+void vim();
 void mkdir();
 void cat();
 bool exit();
@@ -316,7 +317,7 @@ bool interpretCommand(StrA cmd) {
     } else if (cmd.substr(0, cmdsize) == "help"a) {
         print_help();
     } else if (cmd.substr(0, cmdsize) == "vim"a) {
-
+        vim();
     } else if (cmd.substr(0, cmdsize) == "mkdir"a) {
         mkdir();
     } else if (cmd.substr(0, cmdsize) == "cat"a) {
@@ -392,6 +393,28 @@ void print_help() {
     io_print(io, "  Exit"a);
 }
 
+void vim() {
+    File& io = wt->io;
+    int cmdsize = 3;
+    int from = 0;
+    ArenaArrayList<char> cmd = wt->history.back();
+    StrA cmdStr = vecToStrA(cmd);
+    seek(cmdStr, from, cmdsize);
+    StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
+
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+
+	for (DirEntry& e : *wd) {
+        if (open_file(file)) {
+            return;
+        }
+	}
+    io_print(io, "File not found."a);
+}
+
 void mkdir() {
 	File& io = wt->io;
     int cmdsize = 5;
@@ -442,15 +465,7 @@ bool exit() {
 }
 
 void pwd() {
-	File& io = wt->io;
-	StrA path = ""a;
-	for (int i = 0; i < wd->size; i++) {
-		path = add_two_stra(path, wd->data[i].name);
-		if (i != wd->size - 1) {
-            path = add_two_stra(path, "/"a);
-		}
-	}
-	io_print(io, path);
+
 
 }
 
@@ -482,8 +497,6 @@ void touch() {
 void clear() {
 	File& io = wt->io;
 	io.clear();
-    //new_cmd_line();
-	//io.push_back(strAToVec(PROMPT));
 }
 
 int getLineLen() {
@@ -524,6 +537,7 @@ bool open_file(StrA file) {
         if (e.name == file && !e.isDir) {
             wf = e.file;
             curCursorX = getLineLen();
+            curCursorY = 0;
             curOffset = -1;
             terminalMode = TerminalMode::Editor;
             return true;
