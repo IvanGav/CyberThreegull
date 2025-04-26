@@ -76,7 +76,15 @@ StrA fileToStrA(File& f);
 void io_print(File& f, StrA s);
 ArenaArrayList<char> strAToVec(StrA s);
 bool interpretCommand(StrA cmd);
+void print_dir();
 void print_help();
+void mkdir();
+void cat();
+bool exit();
+void pwd();
+void exec();
+void touch();
+void clear();
 int getLineLen();
 void create_file(StrA name, bool isDir);
 bool close_file();
@@ -303,7 +311,7 @@ bool interpretCommand(StrA cmd) {
     File& io = wt->io;
     
     if (cmd.substr(from, cmdsize) == "dir"a || cmd.substr(from, cmdsize) == "l"a) {
-        
+        print_dir();
     } else if (cmd.substr(from, cmdsize) == "help"a) {
         print_help();
     } else if (cmd.substr(from, cmdsize) == "vim"a) {
@@ -328,6 +336,22 @@ bool interpretCommand(StrA cmd) {
 
     new_cmd_line();
     return false;
+}
+
+void print_dir() {
+	File& io = wt->io;
+	if (wd->size == 0) {
+		io_print(io, "No files in this directory."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.isDir) {
+			io_print(io, e.name);
+		}
+		else {
+			io_print(io, e.name);
+		}
+	}
 }
 
 void print_help() {
@@ -361,6 +385,99 @@ void print_help() {
 
     io_print(io, " >exit"a);
     io_print(io, "  Exit"a);
+}
+
+void mkdir() {
+	File& io = wt->io;
+    int cmdsize = 5;
+	int from = 0;
+	ArenaArrayList<char> cmd = wt->history.back();
+	StrA cmdStr = vecToStrA(cmd);
+	seek(cmdStr, from, cmdsize);
+	StrA dir = vecToStrA(wt->history.back()).substr(cmdsize,cmdStr.length - 1);
+
+	if (dir.is_empty()) {
+		io_print(io, "No directory name specified."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.name == dir && e.isDir) {
+			io_print(io, "Directory already exists."a);
+			return;
+		}
+	}
+	create_file(dir, true);
+}
+
+
+// Print out file 
+void cat() {
+	File& io = wt->io;
+	int cmdsize = 4;
+	int from = 0;
+	ArenaArrayList<char> cmd = wt->history.back();
+	StrA cmdStr = vecToStrA(cmd);
+	seek(cmdStr, from, cmdsize);
+	StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.name == file && !e.isDir) {
+			io_print(io, fileToStrA(*e.file));
+			return;
+		}
+	}
+	io_print(io, "File not found."a);
+}
+
+bool exit() {
+    return true;
+}
+
+void pwd() {
+	File& io = wt->io;
+	StrA path = ""a;
+	for (int i = 0; i < wd->size; i++) {
+		path = add_two_stra(path, wd->data[i].name);
+		if (i != wd->size - 1) {
+            path = add_two_stra(path, "/"a);
+		}
+	}
+	io_print(io, path);
+
+}
+
+void exec() {
+
+}
+
+void touch() {
+	File& io = wt->io;
+	int cmdsize = 6;
+	int from = 0;
+	ArenaArrayList<char> cmd = wt->history.back();
+	StrA cmdStr = vecToStrA(cmd);
+	seek(cmdStr, from, cmdsize);
+	StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.name == file && !e.isDir) {
+			io_print(io, "File already exists."a);
+			return;
+		}
+	}
+	create_file(file, false);
+}
+
+void clear() {
+	File& io = wt->io;
+	io.clear();
+	io.push_back(strAToVec(PROMPT));
 }
 
 int getLineLen() {
