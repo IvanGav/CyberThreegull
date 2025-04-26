@@ -30,6 +30,14 @@ V2F32 userMouse;
 ArenaArrayList<VKGeometry::StaticModel> staticModelsToRender;
 ArenaArrayList<VKGeometry::SkeletalModel*> skeletalModelsToRender;
 
+struct TermInterface {
+	V3F32 p1;
+	V3F32 p2;
+	V3F32 p3;
+};
+
+TermInterface term0{ {-5.78971F,0.07619F,-5.27076F}, {-5.78971F,0.992912F,-5.27076F}, {-5.1248F, 0.07619F, -6.42548F} };
+
 struct LineCollider {
 	V2F32 a;
 	V2F32 b;
@@ -105,6 +113,14 @@ void draw_world() {
 			model.color = V4F32{ 1.0F, 0.0F, 0.0F, 1.0F};
 			draw_static_model(model);
 		}
+	}
+	{
+		VKGeometry::StaticModel model;
+		VKGeometry::make_static_model(&model, Resources::cubeMesh);
+		model.transform.translate(term0.p1);
+		model.transform.scale({ 0.1F, 0.1F, 0.1F });
+		model.color = V4F32{ 1.0F, 0.0F, 0.0F, 1.0F };
+		draw_static_model(model);
 	}
 }
 
@@ -269,15 +285,22 @@ void do_frame() {
 
 		DynamicVertexBuffer::Tessellator& tes = DynamicVertexBuffer::get_tessellator();
 
+		printf("x%\n"a, distance(term0.p1, term0.p3));
+		printf("y%\n"a, distance(term0.p1, term0.p2));
 		{
 			M4x3F32 textTransform;
 			textTransform.set_identity();
+			textTransform.translate(term0.p2);
+			textTransform.set_row(0, -normalize(term0.p3 - term0.p1));
+			textTransform.set_row(1, normalize(term0.p2 - term0.p1));
+			textTransform.set_row(2, V3F32{0.0F, 0.0F, 1.0F});
+			textTransform.transpose_rotation();
 			File& f = getTerminal();
 			tes.begin_draw(VK::uiPipeline, VK::uiPipelineLayout, DynamicVertexBuffer::DRAW_MODE_QUADS, textTransform);
 			F32 offset = 0.0F;
 			for (ArenaArrayList<char>& s : f) {
-				TextRenderer::draw_string_batched(tes, StrA{ s.data, s.size }, 0.0F, offset, 0.0F, 1.0F, V4F32{ 1.0F, 1.0f, 1.0F, 1.0F }, 0);
-				offset += 1.0F;
+				TextRenderer::draw_string_batched(tes, StrA{ s.data, s.size }, 0.03F, offset, -0.01F, 0.05F, V4F32{ 0.0F, 0.0f, 0.0F, 1.0F }, 0);
+				offset += 0.05F;
 			}
 			tes.end_draw();
 		}

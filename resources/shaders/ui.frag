@@ -41,6 +41,9 @@ void main(){
 			discard;
 		}
 	}
+	if(pos.x > 1.3324724 || pos.y > 0.9167219){
+		discard;
+	}
 	if ((flags & UI_RENDER_FLAG_MSDF) != 0) {
 		vec2 texdx = dFdx(texcoord);
 		vec2 texdy = dFdy(texcoord);
