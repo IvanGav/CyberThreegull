@@ -194,6 +194,7 @@
     <ClInclude Include="src\VK_decl.h" />
     <ClInclude Include="src\WASAPIInterface.h" />
     <ClInclude Include="src\Win32.h" />
+    <ClInclude Include="Terminal.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

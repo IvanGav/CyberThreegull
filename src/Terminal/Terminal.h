@@ -61,7 +61,8 @@ void scrollInput(F32 scroll);
 int seek(StrA str, int& from, int& len);
 bool interpretCommand(StrA cmd);
 int getLineLen();
-void createFile(StrA name);
+void createFile(StrA name, bool isDir);
+bool rightmost();
 
 /*
     API
@@ -186,7 +187,6 @@ void createFile(StrA name, bool isDir) {
         DirEntry e = DirEntry { true, name };
         e.dir = d;
         wd->push_back(e);
-
     } else {
         File* f = globalArena.zalloc<File>(1);
         f->push_back("");
@@ -196,29 +196,48 @@ void createFile(StrA name, bool isDir) {
     }
 }
 
-std::string get_prompt() {
-    if (terminalMode == TerminalMode::Normal)
-        return "> ";
-    else if (terminalMode == TerminalMode::Input)
-        return ": ";
-    else
-        return std::to_string(connectedCamNumber) + ">";
+// Return true if successful
+bool closeFile() {
+    if (wf == &wt->history) {
+        return false;
+    }
+    wf = &wt->history;
+    curCursorX = 2;
+    curCursorY = wf->size - 1;
+    curOffset = -1;
+    return true;
 }
 
-void change_file(int file) {
-    curFile = file;
-    curCursorY = get_cur_file().size() - 1;
-    if (file == 0) {
-        curCursorX = 2;
+// Open a file with a given name. Return true if the file was found (and opened).
+bool openFile(StrA file) {
+    for (DirEntry& e : *wd) {
+        if (e.name == file && !e.isDir) {
+            wf = e.file;
+            curCursorX = getLineLen();
+            curOffset = -1;
+            return true;
+        }
     }
-    else {
-        curCursorX = get_line_len();
-    }
-    curOffset = -1;
+    return false;
 }
+
+// Change dir. Return true if the dir was found (and changed to).
+// TODO: not finished
+bool changeDir(StrA dir) {
+    for (DirEntry& e : *wd) {
+        if (e.name == file && !e.isDir) {
+            wf = e.file;
+            curCursorX = getLineLen();
+            curOffset = -1;
+            return true;
+        }
+    }
+    return false;
+}
+
 //return true if cursor is currently the rightmost of the line
 bool rightmost() {
-    return get_line_len() == curCursorX;
+    return getLineLen() == curCursorX;
 }
 
 //when in a terminal, set the latest line to be the correct selected (history) command
