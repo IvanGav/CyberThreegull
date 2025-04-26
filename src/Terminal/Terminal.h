@@ -112,69 +112,8 @@ bool enter_key();
     API
 */
 
-// read single character
-char getCharFromConsole() {
-    char c = 0;
-    DWORD bytesRead = 0;
-    // Get the handle to standard input.
-    HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
-    // Read one character from the console.
-    ReadConsoleA(hInput, &c, 1, &bytesRead, NULL);
-    return c;
-}
-
-// Function to simulate a virtual terminal
-void runVirtualTerminal() {
-    char inputBuffer[256]; // Buffer for user input
-    bool isRunning = true;
-
-    terminalsInit(); // Initialize terminals
-    openTerminal(0); // Open the first terminal
-
-    while (isRunning) {
-        // Display the prompt
-
-        int i = 0;
-        char c = 0;
-        while (i < 255) {
-            c = getCharFromConsole(); // Read a single character
-            if (c == '\n') { // Handle newline
-                break;
-            }
-            inputBuffer[i++] = c;
-        }
-        inputBuffer[i] = '\0'; // Null-terminate the string
-
-        // Skip empty input
-        if (i == 0) {
-            continue;
-        }
-
-        // Convert input to StrA
-        StrA command{ inputBuffer, static_cast<U64>(i) };
-
-        // Process the command
-        if (command == "exit"a) {
-            isRunning = false; // Exit the terminal
-        }
-        else {
-            interpretCommand(command); // Interpret the command
-        }
-
-        // Print the current terminal state
-        print("____________________________"a);
-        print(fileToStrA(*wf));
-    }
-}
-
 // Call before using terminals
 void terminalsInit() {
-    //    MemoryArena& arena = get_scratch_arena();
-    //    MEMORY_ARENA_FRAME(arena) {
-    //        ArenaArrayList<char> arr {};
-
-    //    }
-    //    strafmt(arena, "THere are % number of ducks"a, 5);
     for (int i = 0; i < 6; i++) {
         ts[i].history = {};
         ts[i].root = {};
@@ -187,11 +126,11 @@ void openTerminal(int terminal) {
     wt = &ts[terminal];
     wd = &wt->root;
     wf = &wt->io;
-    curCursorX = 2;
-    curCursorY = wf->size - 1;
+    new_cmd_line();
+    //curCursorX = 2;
+    //curCursorY = wf->size - 1;
     curOffset = -1;
     savedCursorX = 0;
-    new_cmd_line();
 }
 
 //get a pointer to a vector of strings to draw
@@ -311,6 +250,7 @@ void io_print(File& f, StrA s, StrA s2) {
 bool interpretCommand(StrA cmd) {
     int from = 0;
     int cmdsize;
+    while (cmd.front() == ' ') cmd++;
     seek(cmd, from, cmdsize);
 
     File& io = wt->io;
@@ -331,7 +271,12 @@ bool interpretCommand(StrA cmd) {
     } else if (cmd.substr(0, cmdsize) == "help"a) {
         print_help();
     } else if (cmd.substr(0, cmdsize) == "vim"a) {
-        vim();
+        int filename_from = seek(cmd, from, cmdsize);
+        StrA file = cmd.substr(filename_from, cmdsize);
+
+        if (!open_file(file)) {
+            io_print(io, "File not found."a);
+        }
     } else if (cmd.substr(0, cmdsize) == "mkdir"a) {
         mkdir();
     } else if (cmd.substr(0, cmdsize) == "cat"a) {
@@ -339,7 +284,7 @@ bool interpretCommand(StrA cmd) {
     } else if (cmd.substr(0, cmdsize) == "exit"a) {
         return true;
     } else if (cmd.substr(0, cmdsize) == "pwd"a) {
-        pwd();
+        
     } else if (cmd.substr(0, cmdsize) == "cd"a) {
         seek(cmd, from, cmdsize);
         StrA dir{cmd.str+from-cmdsize, cmdsize};
@@ -347,7 +292,17 @@ bool interpretCommand(StrA cmd) {
     } else if (cmd.substr(0, cmdsize) == "exec"a) {
         exec();
     } else if (cmd.substr(0, cmdsize) == "touch"a) {
-        touch();
+        int filename_from = seek(cmd, from, cmdsize);
+        StrA file = cmd.substr(filename_from, cmdsize);
+
+        for (DirEntry& e : *wd) {
+            if (e.name == file && !e.isDir) {
+                io_print(io, "File already exists."a);
+                goto skip_touch;
+            }
+        }
+        create_file(file, false);
+        skip_touch:;
     } else if (cmd.substr(0, cmdsize) == "clear"a) {
         File& io = wt->io;
         io.clear();
@@ -393,25 +348,7 @@ void print_help() {
 }
 
 void vim() {
-    File& io = wt->io;
-    int cmdsize = 3;
-    int from = 0;
-    ArenaArrayList<char> cmd = wt->history.back();
-    StrA cmdStr = vecToStrA(cmd);
-    seek(cmdStr, from, cmdsize);
-    StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
-
-	if (file.is_empty()) {
-		io_print(io, "No file name specified."a);
-		return;
-	}
-
-	for (DirEntry& e : *wd) {
-        if (open_file(file)) {
-            return;
-        }
-	}
-    io_print(io, "File not found."a);
+    
 }
 
 void mkdir() {
@@ -458,19 +395,6 @@ void cat() {
 	}
 	io_print(io, "File not found."a);
 }
-//
-//void pwd() {
-//	File& io = wt->io;
-//	StrA path = ""a;
-//	for (int i = 0; i < wd->size; i++) {
-//		path = add_two_stra(path, wd->data[i].name);
-//		if (i != wd->size - 1) {
-//            path = add_two_stra(path, "/"a);
-//		}
-//	}
-//	io_print(io, path);
-//
-//}
 
 void exec() {
 
@@ -611,6 +535,7 @@ void set_cur_terminal_line() {
 
 // assuming that `wt` is history, put a blank cmd line
 void new_cmd_line() {
+    if (terminalMode != TerminalMode::Cmd) return;
     wt->history.push_back(ArenaArrayList<char>{});
     wt->io.push_back(ArenaArrayList<char>{});
     editingHistory = wt->history.size - 1;
@@ -645,6 +570,7 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
             return true;
         } else {
             close_file();
+            new_cmd_line();
         }
     } else if (c != '\0') {
         insert_char(c);
@@ -896,8 +822,9 @@ bool enter_key() {
         } else {
             //split
             ArenaArrayList<char>& curLine = wf->data[curCursorY];
-            wf->insert(curLine.subarray(curCursorX, curLine.size-curCursorX), curCursorY + 1);
-            curLine = curLine.subarray(0, curCursorX);
+            ArenaArrayList<char> lastHalf{}; lastHalf.copy_from_skip_n(curLine, curCursorX);
+            wf->insert(lastHalf, curCursorY + 1);
+            curLine.copy_from_n(curLine, curCursorX);
         }
         down_arrow();
         curCursorX = 0;

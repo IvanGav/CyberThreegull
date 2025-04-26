@@ -381,6 +381,13 @@ struct ArenaArrayList {
 		}
 	}
 
+	void copy_from_n(ArenaArrayList& other, U32 n) {
+		clear();
+		if (other.data) {
+			push_back_n(other.data, n);
+		}
+	}
+
 	I64 idx_of(const T& value) {
 		T* begin = data;
 		T* end = begin + size;
