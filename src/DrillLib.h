@@ -274,6 +274,10 @@ struct ArenaArrayList {
 	U32 size;
 	U32 capacity;
 
+	FINLINE T operator[](I64 pos) const {
+		return data[pos < 0 ? size + pos : pos];
+	}
+
 	FINLINE void reserve(U32 newCapacity) {
 		if (newCapacity > capacity) {
 			data = (allocator ? allocator : &globalArena)->realloc(data, capacity, newCapacity);
@@ -719,8 +723,6 @@ struct StrA {
 		U64 last = min(U64(end), length);
 		return StrA{ str + first, U64(last - first) };
 	}
-
-
 	FINLINE StrA prefix(I64 amount) const {
 		return slice(0, amount);
 	}

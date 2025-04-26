@@ -2,6 +2,9 @@
 
 #include "../Win32.h"
 
+#define PROMPT "> "a
+#define PROMPT_LEN 2
+
 struct DirEntry;
 
 typedef ArenaArrayList<ArenaArrayList<char>> File;
@@ -333,62 +336,105 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
     return false;
 }
 
+ArenaArrayList<StrA> find_files(StrA match) {
+	ArenaArrayList<StrA> files{}; // List of matching files
+	for (int i = 0; i < wd->size; i++) {
+		StrA currFile = wd->data[i].name; // current file name
+		// Check if the current file name starts with the input
+		if (currFile.starts_with(match)) {
+			// Found a file that matches the input
+			files.push_back(currFile);
+		}
+	}
+	return files;
+}
+
+StrA findInputToTab() {
+	// Find the last space in the line
+	StrA fullLine = vecToStrA(wf->back()); // get the full line
+    StrA currentLine = (fullLine++)++; // removes the prompt
+	int indexLastSpace = currentLine.find(" "a); // get index of last space, -1 if none
+	StrA inputToTab = (indexLastSpace == -1) ? currentLine : currentLine.skip(indexLastSpace + 1); // actual input to tab
+	return inputToTab;
+}
+
+
 void tab_key() {
 	if (terminalMode == TerminalMode::Editor) {
 		return;
 	}
-
-	Dir* currDir = wd; // current Directory
-
-    // Getting the users typed line
-    StrA fullLine = vecToStrA(wf->back());
-	StrA prompt = fullLine.slice(0, 2); // get the prompt
-    StrA currentLine = (fullLine++)++; // removes the prompt
-    ArenaArrayList<char>* updatedLine = wf->back();
-
-	if (currentLine.is_empty()) {
+	if (wf->back().size > PROMPT_LEN) {
 		// line empty
 		return;
 	}
-    
-	// Finding the section of the line that needs to be autocompleted(tabbed)
-    int indexLastSpace = currentLine.skip(currentLine.find(" ")); // get index of last space, -1 if none
-    StrA inputToTab = (indexLastSpace == -1) ? currentLine : currentLine.slice(indexLastSpace + 1); // actual input to tab
-	int inputToTabSize = inputToTab.size; // size of the input to tab
-    StrA tabbedInput; 
-	
-    ArenaArrayList<StrA> Files{}; // List of matching files
-    for (ArenaArrayList<char>* currFileRaw : File) {
-        StrA currFile = vecToStrA(*currFileRaw); // current file name
-        // Check if the current file name starts with the input
-        if (currFile.starts_with(inputToTab)) {
-            // Found a file that matches the input
-            Files.push_back(currFile); 
-        }
-    }
+    Dir* currDir = wd; // current Directory
+    ArenaArrayList<char>* updatedLine = &wf->back();
 
+	// Finding the section of the line that needs to be autocompleted(tabbed)
+    StrA inputToTab = findInputToTab();
+	int inputToTabSize = inputToTab.length; // size of the input to tab
+    StrA tabbedInput = ""a;
+	
+    // Find matching files to the tabbed input
+	ArenaArrayList<StrA> files = find_files(inputToTab);
     // Check if we have matches
-	if (Files.size > 0) {
-		// We have matchee
-		if (Files.size == 1) {
-			// if there is only one match just update the  updatedLine
-			tabbedInput = Files[0].slice(inputToTabSize); // get the rest of the file name
-		}
-		else {
+    if (files.size == 0)
+        return;
+
+	// We have match
+	if (files.size == 1) {
+		// if there is only one match just update the  updatedLine
+		tabbedInput = files[0].skip(inputToTabSize); // get the rest of the file name
+        updatedLine->push_back(tabbedInput); // add the tabbed input to the line
+
+        // Update the cursor position
+        curCursorX += tabbedInput.length;
+        makeRightmost();
+        return;
+	}
 			// More than one match
             // IMPLEMENT TODO 
-            tabbedInput = Files[0].slice(inputToTabSize); // get the rest of the file name
-		}
-	}
-    else {
-        // no matches, dont change anything
-        tabbedInput = ""a;
-    }
+    while (1) {
+        struct Prefix {
+            StrA prefix;
+            int count;
+        };
 
-	updatedLine->push_back(tabbedInput); // add the tabbed input to the line
-	// Update the cursor position
-    curCursorX += tabbedInput.size;
-    makeRightmost();
+        int lineAdjust = 0;
+
+        // Find the longest common prefix
+        Prefix mostCommonPrefix = { ""a, -1 };
+        Prefix currCommonPrefix = { ""a, -1 };
+        for (int i = 0; i < files.size; i++) {
+            StrA currPrefix = files[i].slice(inputToTabSize + 1 + lineAdjust, inputToTabSize + 1 + lineAdjust);
+            currCommonPrefix = { currPrefix, 1 };
+
+            // find the first character of a file name with greater matches to other files
+            for (int j = i + 1; j < files.size; j++) {
+                StrA compPrefix = files[j].slice(inputToTabSize + 1 + lineAdjust, inputToTabSize + 1 + lineAdjust);
+                if (currPrefix.starts_with(compPrefix)) {
+                    currCommonPrefix.count++;
+                }
+            }
+            if (mostCommonPrefix.count == -1 || currCommonPrefix.count > mostCommonPrefix.count) {
+                mostCommonPrefix = currCommonPrefix;
+            }
+
+        }
+
+		// Check if we have a common prefix
+		if (mostCommonPrefix.count == 1) {
+			// No common prefix, just print the files
+			break;
+		}
+
+        updatedLine->push_back(mostCommonPrefix.prefix); // add the common prefix to the line
+        curCursorX++;
+        lineAdjust++;
+        makeRightmost();
+
+    }
+     
 
 }
 
@@ -478,7 +524,7 @@ void insert_char(char c) {
 }
 
 void backspace_key() {
-    if (curFile == 0) {
+	if (curFile == 0) {
         //terminal
         file& f = get_cur_file();
         if (curCursorX > 2) {

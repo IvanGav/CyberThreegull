@@ -1,4 +1,5 @@
 #include "CyberThreegull.h"
+#include "Terminal/Terminal.h"
 
 void mainCRTStartup() {
 	if (!drill_lib_init()) {
