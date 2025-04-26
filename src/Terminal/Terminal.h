@@ -282,6 +282,7 @@ ArenaArrayList<char> strAToVec(StrA s) {
     ArenaArrayList<char> b{};
     b.data = const_cast<char*>(s.str);
     b.size = s.length;
+    return b;
 }
 
 void io_print(File& f, StrA s) {
@@ -334,32 +335,32 @@ void print_help() {
     io_print(io, " >help"a);
     io_print(io, "  Display this message"a);
 
-    io.push_back(" >clear");
-    io.push_back("  Clear the terminal");
+    io_print(io, " >clear"a);
+    io_print(io, "  Clear the terminal"a);
 
-    io.push_back(" >dir/l [dir]");
-    io.push_back("  List all files in a directory");
+    io_print(io, " >dir/l [dir]"a);
+    io_print(io, "  List all files in a directory"a);
 
-    io.push_back(" >cat <file>");
-    io.push_back("  Print file's contents");
+    io_print(io, " >cat <file>"a);
+    io_print(io, "  Print file's contents"a);
 
-    io.push_back(" >vim <file>");
-    io.push_back("  Open a file in an editor");
+    io_print(io, " >vim <file>"a);
+    io_print(io, "  Open a file in an editor"a);
 
-    io.push_back(" >touch <file>");
-    io.push_back("  Create a file");
+    io_print(io, " >touch <file>"a);
+    io_print(io, "  Create a file"a);
 
-    io.push_back(" >mkdir <dir>");
-    io.push_back("  Create a directory");
+    io_print(io, " >mkdir <dir>"a);
+    io_print(io, "  Create a directory"a);
 
-    io.push_back(" >pwd");
-    io.push_back("  Print the working directory");
+    io_print(io, " >pwd"a);
+    io_print(io, "  Print the working directory"a);
 
-    io.push_back(" >exec <file>");
-    io.push_back("  Execute a file");
+    io_print(io, " >exec <file>"a);
+    io_print(io, "  Execute a file"a);
 
-    io.push_back(" >exit");
-    io.push_back("  Exit");
+    io_print(io, " >exit"a);
+    io_print(io, "  Exit"a);
 }
 
 int getLineLen() {
