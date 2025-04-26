@@ -67,6 +67,44 @@ NameTex textureNames[]{
 	{ "Trolley_Sign"a, "images/trolley problem.png"a },
 };
 
+struct NameColor {
+	StrA name;
+	V3F32 color;
+};
+
+NameColor colorNames[]{
+	{"Blanket.001"a,{20, 20, 20}},
+	{"Curtain_1.001"a,{0, 0, 0}},
+	{"Curtain_2.001"a,{0, 0, 0}},
+	{"Fridge.001"a,{255, 255, 255}},
+	{"light_cable.001"a,{117, 117, 117}},
+	{"light_holder.001"a,{117, 117, 117}},
+	{"lightbulb.001"a,{227, 226, 150}},
+	{"Mattress.001"a,{0, 0, 0}},
+	{"Pillow.001"a,{255, 255, 255}},
+	{"Pillow.001"a,{255, 255, 255}},
+	{"Couch"a,{138, 0, 0}},
+	{"Entrance.001"a,{59, 59, 59}},
+	{"fidget"a,{0, 39, 179}},
+	{"fidget2"a,{0, 39, 179}},
+	{"fidget3"a,{0, 39, 179}},
+	{"fidget4"a,{0, 39, 179}},
+	{"Red_rope_1"a,{179, 0, 0}},
+	{"red_rope_2"a,{179, 0, 0}},
+	{"red_rope_3"a,{179, 0, 0}},
+	{"red_rope_4"a,{179, 0, 0}},
+	{"Cell_Door.001"a,{43, 43, 43}},
+	{"Cell_Door.002"a,{43, 43, 43}},
+	{"Cell_Door.003"a,{43, 43, 43}},
+	{"Cell_Door.004"a,{43, 43, 43}},
+	{"Cell_Door.005"a,{43, 43, 43}},
+	{"Cell_Door.006"a,{43, 43, 43}},
+	{"Cell_Door.007"a,{43, 43, 43}},
+	{"Desk"a,{54, 29, 8}},
+	{"Security_Office_Text"a,{204, 141, 41}},
+};
+
+
 enum TextureFormat : U32 {
 	TEXTURE_FORMAT_NULL,
 	TEXTURE_FORMAT_RGBA_U8,
