@@ -1,9 +1,14 @@
 #include "CyberThreegull.h"
+#include "Terminal/Terminal.h"
+
+
 
 void mainCRTStartup() {
-	if (!drill_lib_init()) {
-		ExitProcess(EXIT_FAILURE);
-	}
-	CyberThreegull::run_cyber_seaquell();
-	ExitProcess(EXIT_SUCCESS);
+    if (!drill_lib_init()) {
+        ExitProcess(EXIT_FAILURE);
+    }
+
+    runVirtualTerminal(); // Run the virtual terminal
+
+    ExitProcess(EXIT_SUCCESS);
 }
