@@ -310,10 +310,9 @@ bool interpretCommand(StrA cmd) {
     int cmdsize;
     seek(cmd, from, cmdsize);
 
-
     File& io = wt->io;
     
-    if (cmd.substr(0, cmdsize) == "dir"a || cmd.substr(from, cmdsize) == "l"a) {
+    if (cmd.substr(0, cmdsize) == "dir"a || cmd.substr(0, cmdsize) == "l"a) {
         print_dir();
     } else if (cmd.substr(0, cmdsize) == "help"a) {
         print_help();
@@ -327,6 +326,10 @@ bool interpretCommand(StrA cmd) {
         exit();
     } else if (cmd.substr(0, cmdsize) == "pwd"a) {
         pwd();
+    } else if (cmd.substr(0, cmdsize) == "cd"a) {
+        seek(cmd, from, cmdsize);
+        StrA dir{cmd.str+from-cmdsize, cmdsize};
+        change_dir(dir);
     } else if (cmd.substr(0, cmdsize) == "exec"a) {
         exec();
     } else if (cmd.substr(0, cmdsize) == "touch"a) {
@@ -448,7 +451,7 @@ void pwd() {
 	StrA path = ""a;
 	Dir* cur_dir = wd;
 	while (cur_dir != nullptr) {
-		path = cur_dir->data[0].name + "/"a + path;
+		path = add_two_stra(add_two_stra(cur_dir->data[0].name, "/"a),path);
 		cur_dir = get_dir(cur_dir->data[0].name);
 	}
 
