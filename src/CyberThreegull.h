@@ -250,10 +250,15 @@ void do_frame() {
 		};
 		VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
 		//Resources::rooms.draw_all(cmdBuf);
-		modelInfo.texIdx = Textures::brainTexture.index;
-		VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
-		Resources::rooms.draw_named(cmdBuf, "Sphere.001"a);
 		
+		for (U32 i = 0; i < ARRAY_COUNT(Textures::textures); i++) {
+			modelInfo.texIdx = Textures::textures[i].index;
+			VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
+			Resources::rooms.draw_named(cmdBuf, Textures::textureNames[i].name);
+		}
+		
+
+
 		DynamicVertexBuffer::Tessellator& tes = DynamicVertexBuffer::get_tessellator();
 
 		{

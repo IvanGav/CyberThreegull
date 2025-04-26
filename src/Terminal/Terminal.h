@@ -79,6 +79,7 @@ void io_print(File& f, StrA s);
 ArenaArrayList<char> strAToVec(StrA s);
 bool interpretCommand(StrA cmd);
 void print_help();
+void vim();
 void mkdir();
 void cat();
 void exec();
@@ -317,19 +318,20 @@ bool interpretCommand(StrA cmd) {
     if (cmd.substr(0, cmdsize) == "dir"a || cmd.substr(0, cmdsize) == "l"a) {
         if (wd->size == 0) {
             io_print(io, "No files in this directory."a);
-            return;
-        }
-        for (DirEntry& e : *wd) {
-            if (e.isDir) {
-                io_print(io, e.name, "/"a);
-            } else {
-                io_print(io, e.name);
+        } else {
+            for (DirEntry& e : *wd) {
+                if (e.isDir) {
+                    io_print(io, e.name, "/"a);
+                }
+                else {
+                    io_print(io, e.name);
+                }
             }
         }
     } else if (cmd.substr(0, cmdsize) == "help"a) {
         print_help();
     } else if (cmd.substr(0, cmdsize) == "vim"a) {
-
+        vim();
     } else if (cmd.substr(0, cmdsize) == "mkdir"a) {
         mkdir();
     } else if (cmd.substr(0, cmdsize) == "cat"a) {
@@ -388,6 +390,28 @@ void print_help() {
 
     io_print(io, " >exit"a);
     io_print(io, "  Exit"a);
+}
+
+void vim() {
+    File& io = wt->io;
+    int cmdsize = 3;
+    int from = 0;
+    ArenaArrayList<char> cmd = wt->history.back();
+    StrA cmdStr = vecToStrA(cmd);
+    seek(cmdStr, from, cmdsize);
+    StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
+
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+
+	for (DirEntry& e : *wd) {
+        if (open_file(file)) {
+            return;
+        }
+	}
+    io_print(io, "File not found."a);
 }
 
 void mkdir() {
@@ -511,6 +535,7 @@ bool open_file(StrA file) {
         if (e.name == file && !e.isDir) {
             wf = e.file;
             curCursorX = getLineLen();
+            curCursorY = 0;
             curOffset = -1;
             terminalMode = TerminalMode::Editor;
             return true;

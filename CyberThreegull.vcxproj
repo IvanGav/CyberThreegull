@@ -199,6 +199,23 @@
     <ClInclude Include="src\Win32.h" />
     <ClInclude Include="src\Terminal\Terminal.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\anxiety room.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\badge.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\Brain Texture.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\Brainrot Texture.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\button.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\Elevator.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\Insecurity Room.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\lever.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\line.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\microwave.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\Prompt Management Door.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\room.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\sewer.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\Terminal_screen.png" />
+    <Image Include="..\..\..\OneDrive\Desktop\blender\CyberSeagull textures\ToDo List.png" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
