@@ -2,7 +2,7 @@
 
 #include "../Win32.h"
 
-#define PROMPT "> "a
+#define PROMPT " >"a
 #define PROMPT_LEN 2
 
 struct DirEntry;
@@ -57,6 +57,8 @@ int editingHistory; // Which item in terminal history is being edited; will be a
 */
 
 // From the outside of the file, use these functions
+char getCharFromConsole();
+void runVirtualTerminal();
 void terminalsInit();
 void openTerminal(int terminal);
 File& getTerminal();
@@ -102,6 +104,60 @@ bool enter_key();
 /*
     API
 */
+
+// read single character
+char getCharFromConsole() {
+    char c = 0;
+    DWORD bytesRead = 0;
+    // Get the handle to standard input.
+    HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+    // Read one character from the console.
+    ReadConsoleA(hInput, &c, 1, &bytesRead, NULL);
+    return c;
+}
+
+// Function to simulate a virtual terminal
+void runVirtualTerminal() {
+    char inputBuffer[256]; // Buffer for user input
+    bool isRunning = true;
+
+    terminalsInit(); // Initialize terminals
+    openTerminal(0); // Open the first terminal
+
+    while (isRunning) {
+        // Display the prompt
+
+        int i = 0;
+        char c = 0;
+        while (i < 255) {
+            c = getCharFromConsole(); // Read a single character
+            if (c == '\n') { // Handle newline
+                break;
+            }
+            inputBuffer[i++] = c;
+        }
+        inputBuffer[i] = '\0'; // Null-terminate the string
+
+        // Skip empty input
+        if (i == 0) {
+            continue;
+        }
+
+        // Convert input to StrA
+        StrA command{ inputBuffer, static_cast<U64>(i) };
+
+        // Process the command
+        if (command == "exit"a) {
+            isRunning = false; // Exit the terminal
+        }
+        else {
+            interpretCommand(command); // Interpret the command
+        }
+
+        // Print the current terminal state
+        print(vecToStrA(wf->back()));
+    }
+}
 
 // Call before using terminals
 void terminalsInit() {
@@ -469,6 +525,7 @@ ArenaArrayList<StrA> find_files(StrA match) {
 	}
 	return files;
 }
+
 
 TabInfo find_input_to_tab() {
 	// Find the last space in the line
