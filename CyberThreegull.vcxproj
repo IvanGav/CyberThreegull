@@ -185,6 +185,7 @@
     <ClInclude Include="src\Resources.h" />
     <ClInclude Include="src\SerializeTools.h" />
     <ClInclude Include="src\Sounds.h" />
+    <ClInclude Include="src\Terminal\Files.h" />
     <ClInclude Include="src\TextRenderer.h" />
     <ClInclude Include="src\Textures.h" />
     <ClInclude Include="src\Textures_decl.h" />

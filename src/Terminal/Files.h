@@ -1,5 +1,6 @@
 ﻿#pragma once
-#include "Terminal.h"
+typedef ArenaArrayList<ArenaArrayList<char>> File;
+void io_print(File&, StrA);
 
 /* Making Puzzles files*/
 
@@ -277,8 +278,7 @@ void incel_facts(File& io) {
 }
 
 
-// Insecurity: Add friends 
-File& io = wt->io;
+// Insecurity: Add friends
 void insecurity(File & io) {
     // Start friend discovery
     io_print(io, "Scanning for available friends..."a);

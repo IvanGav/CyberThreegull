@@ -2,6 +2,7 @@
 
 #include "../Win32.h"
 #include "asm.h"
+#include "Files.h"
 
 #define PROMPT " >"a
 #define PROMPT_LEN 2
@@ -80,6 +81,7 @@ bool interpretCommand(StrA cmd);
 void print_help();
 void vim();
 void mkdir();
+void checkConditions();
 void cat();
 void exec(StrA source, StrA out, StrA error);
 void touch();
@@ -111,6 +113,7 @@ bool enter_key();
     API
 */
 
+
 // Call before using terminals
 void terminalsInit() {
     init_asm();
@@ -118,7 +121,69 @@ void terminalsInit() {
         ts[i].history = {};
         ts[i].root = {};
     }
+
+    //put files in all terminal root directors,
+    // ts[0] = depression
+    // ts[1] = incel
+    // ts[2] = adhd
+    // ts[3] = brainrot
+    // ts[4] = insecurity
+    // ts[5] = anxiety
+
+    File* depressionFile = globalArena.zalloc<File>(1);
+	depression(*depressionFile);
+	ts[0].root.push_back(DirEntry{ false, "depression"a });
+    ts[0].root.back().file = depressionFile;
+
+	File* depressionFactsFile = globalArena.zalloc<File>(1);
+	depresssion_facts(*depressionFactsFile);
+	ts[0].root.push_back(DirEntry{ false, "depression facts"a });
+    ts[0].root.back().file = depressionFactsFile;
+
+	File* incelFile = globalArena.zalloc<File>(1);
+	incel_facts(*incelFile);
+	ts[1].root.push_back(DirEntry{ false, "incel"a });
+	ts[1].root.back().file = incelFile;
+
+	File* incelFactsFile = globalArena.zalloc<File>(1);
+	incel_facts(*incelFactsFile);
+	ts[1].root.push_back(DirEntry{ false, "incel facts"a });
+	ts[1].root.back().file = incelFactsFile;
+
+	File* adhdFile = globalArena.zalloc<File>(1);
+	adhd(*adhdFile);
+	ts[2].root.push_back(DirEntry{ false, "adhd"a });
+	ts[2].root.back().file = adhdFile;
+
+	File* adhdFactsFile = globalArena.zalloc<File>(1);
+	adhd_facts(*adhdFactsFile);
+	ts[2].root.push_back(DirEntry{ false, "adhd facts"a });
+	ts[2].root.back().file = adhdFactsFile;
+
+	File* insecurityFile = globalArena.zalloc<File>(1);
+	insecurity(*insecurityFile);
+	ts[4].root.push_back(DirEntry{ false, "insecurity"a });
+	ts[4].root.back().file = insecurityFile;
+
+	File* insecurityFactsFile = globalArena.zalloc<File>(1);
+	insecurity_facts(*insecurityFactsFile);
+	ts[4].root.push_back(DirEntry{ false, "insecurity facts"a });
+	ts[4].root.back().file = insecurityFactsFile;
+
+	File* anxietyFile = globalArena.zalloc<File>(1);
+    anxiety(*anxietyFile);
+	ts[5].root.push_back(DirEntry{ false, "anxiety"a });
+	ts[5].root.back().file = anxietyFile;
+
+	File* anxietyFactsFile = globalArena.zalloc<File>(1);
+	anxiety_facts(*anxietyFactsFile);
+	ts[5].root.push_back(DirEntry{ false, "anxiety facts"a });
+    ts[5].root.back().file = anxietyFactsFile;
+
+
+
 }
+    
 
 // Open a terminal number 'terminal'
 void openTerminal(int terminal) {
@@ -132,6 +197,37 @@ void openTerminal(int terminal) {
     curOffset = -1;
     savedCursorX = 0;
 }
+
+void checkConditions() {
+    int terminalIndex = wt - ts; // Calculate the index of the current terminal
+    switch (terminalIndex) {
+        case 0:
+            for (DirEntry& e : *wd) {
+				if (!e.isDir) {
+					if (e.name == "depression"a) {
+						// Check if happiness what changed
+                        // Loop trough file to make sure "-5" isnt in the file
+						for (int i = 0; i < e.file->size; i++) {
+							if (e.file->data[i].data[0] == '-' && e.file->data[i].data[1] == '5') {
+								// Found -5, do nothing
+								return;
+							}
+
+						}
+						// Found value isnt -5, so we congratulate the user
+						File& io = wt->io;
+						io_print(io, "Congratulations! You have cured the depression!"a);
+						io_print(io, "ChatGPT is now happy!"a);							
+					}
+				}
+            }
+        break;
+        // Add cases for other terminals if needed
+    default:
+        break;
+    }
+}
+
 
 //get a pointer to a vector of strings to draw
 File& getTerminal() {
@@ -445,6 +541,7 @@ void create_file(StrA name, bool isDir) {
 
 // Return true if successful
 bool close_file() {
+
     if (terminalMode == TerminalMode::Cmd) {
         return false;
     }
@@ -453,6 +550,9 @@ bool close_file() {
     curCursorY = wf->size - 1;
     curOffset = -1;
     terminalMode = TerminalMode::Cmd;
+
+    checkConditions(); // JANG
+
     return true;
 }
 
