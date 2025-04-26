@@ -417,6 +417,7 @@ struct ArenaArrayList {
 			data[i] = data[i - 1];
 		}
 		data[index] = T(value);
+		size++;
 	}
 
 	T erase(U32 index) {
@@ -424,6 +425,7 @@ struct ArenaArrayList {
 		for (U32 i = index; i < size-1; i++) {
 			data[i] = data[i + 1];
 		}
+		size--;
 		return temp;
 	}
 

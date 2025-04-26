@@ -67,15 +67,15 @@ StrA vecToStrA(ArenaArrayList<char>& list);
 StrA fileToStrA(File& f);
 bool interpretCommand(StrA cmd);
 int getLineLen();
-void createFile(StrA name, bool isDir);
-bool closeFile();
-bool openFile(StrA file);
-bool changeDir(StrA dir);
-Dir* getDir(StrA path);
+void create_file(StrA name, bool isDir);
+bool close_file();
+bool open_file(StrA file);
+bool change_dir(StrA dir);
+Dir* get_dir(StrA path);
 bool rightmost();
-void makeRightmost();
-void setCurTerminalLine();
-void newCmdLine();
+void make_rightmost();
+void set_cur_terminal_line();
+void new_cmd_line();
 bool interpret_typed_character(Win32::Key charCode, char c);
 //void tab_key();
 void up_arrow();
@@ -114,7 +114,7 @@ void openTerminal(int terminal) {
     curCursorY = wf->size - 1;
     curOffset = -1;
     savedCursorX = 0;
-    newCmdLine();
+    new_cmd_line();
 }
 
 //get a pointer to a vector of strings to draw
@@ -201,6 +201,7 @@ StrA fileToStrA(File& f) {
     ArenaArrayList<char> buf{};
     for (int i = 0; i < f.size; i++) {
         buf.push_back_n(f.data[i].data, f.data[i].size);
+        buf.push_back('\n');
     }
     return vecToStrA(buf);
 }
@@ -211,11 +212,14 @@ StrA fileToStrA(File& f) {
 
 // Given a command, interpret it. Return false.
 bool interpretCommand(StrA cmd) {
+    cmd++; cmd++;
     int from = 0;
     int cmdsize;
     seek(cmd, from, cmdsize);
-    if (terminalMode == TerminalMode::Cmd) {}
-    newCmdLine();
+    
+    //if(cmd.substr(0,cmdsize) == "")
+
+    new_cmd_line();
     return false;
 }
 
@@ -223,7 +227,7 @@ int getLineLen() {
     return wf->data[curCursorY].size;
 }
 
-void createFile(StrA name, bool isDir) {
+void create_file(StrA name, bool isDir) {
     if (isDir) {
         Dir* d = globalArena.zalloc<Dir>(1);
         DirEntry e = DirEntry { true, name };
@@ -239,7 +243,7 @@ void createFile(StrA name, bool isDir) {
 }
 
 // Return true if successful
-bool closeFile() {
+bool close_file() {
     if (wf == &wt->history) {
         return false;
     }
@@ -252,7 +256,7 @@ bool closeFile() {
 }
 
 // Open a file with a given name. Return true if the file was found (and opened).
-bool openFile(StrA file) {
+bool open_file(StrA file) {
     for (DirEntry& e : *wd) {
         if (e.name == file && !e.isDir) {
             wf = e.file;
@@ -266,7 +270,7 @@ bool openFile(StrA file) {
 }
 
 // Change dir. Return true if the dir was found (and changed to).
-bool changeDir(StrA dir) {
+bool change_dir(StrA dir) {
     for (DirEntry& e : *wd) {
         if (e.name == dir && e.isDir) {
             wd = e.dir;
@@ -277,7 +281,7 @@ bool changeDir(StrA dir) {
 }
 
 // Get a directory that's indicated by the path. Return nullptr if it doesn't exist.
-Dir* getDir(StrA path) {
+Dir* get_dir(StrA path) {
     Dir* cur_dir = wd;
     MemoryArena& arena = get_scratch_arena();
     MEMORY_ARENA_FRAME(arena) {
@@ -308,36 +312,39 @@ bool rightmost() {
 }
 
 // make cursor rightmost in current line
-void makeRightmost() {
+void make_rightmost() {
     curCursorX = getLineLen();
 }
 
 //when in a terminal, set the latest line to be the correct selected (`editingHistory`) command
-void setCurTerminalLine() {
+void set_cur_terminal_line() {
     wt->history.back().clear();
     ArenaArrayList data = wt->history.data[editingHistory];
     wt->history.back().push_back_n(data.data, data.size);
 }
 
 // assuming that `wt` is history, put a blank cmd line
-void newCmdLine() {
-    //if the last history line is empty, don't make a new empty line
-    if (wt->history.empty() || wt->history.back().size > 2) {
-        wt->history.push_back(ArenaArrayList<char>{});
-    }
+void new_cmd_line() {
+    wt->history.push_back(ArenaArrayList<char>{});
     wt->history.back().push_back(' ', '>');
-    curCursorX = 2;
+    //if the last history line is empty, don't make a new empty line
+    /*if (wt->history.empty() || wt->history.back().size > 2) {
+        
+    } else {
+        wt->history.back().clear();
+    }*/
+
     curCursorY = wt->history.size - 1;
     editingHistory = wt->history.size - 1;
-    setCurTerminalLine();
+    make_rightmost();
 }
 
 /*
     Interpret typed character
 */
 
-//typing prefixes the selected character
 
+//typing prefixes the selected character
 bool interpret_typed_character(Win32::Key charCode, char c) {
     if (charCode == Win32::KEY_UP) {
         up_arrow();
@@ -359,7 +366,7 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
         if (terminalMode == TerminalMode::Cmd) {
             return true;
         } else {
-            closeFile();
+            close_file();
         }
     } else if (c != '\0') {
         insert_char(c);
@@ -380,7 +387,7 @@ ArenaArrayList<StrA> find_files(StrA match) {
 	return files;
 }
 
-StrA findInputToTab() {
+StrA find_input_to_tab() {
 	// Find the last space in the line
 	StrA fullLine = vecToStrA(wf->back()); // get the full line
     StrA currentLine = (fullLine++)++; // removes the prompt
@@ -402,7 +409,7 @@ void tab_key() {
     ArenaArrayList<char>* updatedLine = &wf->back();
 
 	// Finding the section of the line that needs to be autocompleted(tabbed)
-    StrA inputToTab = findInputToTab();
+    StrA inputToTab = find_input_to_tab();
 	int inputToTabSize = inputToTab.length; // size of the input to tab
     StrA tabbedInput = ""a;
 	
@@ -420,7 +427,7 @@ void tab_key() {
 
         // Update the cursor position
         curCursorX += tabbedInput.length;
-        makeRightmost();
+        make_rightmost();
         return;
 	}
 			// More than one match
@@ -462,7 +469,7 @@ void tab_key() {
         updatedLine->push_back_n(mostCommonPrefix.prefix.str, mostCommonPrefix.prefix.length); // add the common prefix to the line
         curCursorX++;
         lineAdjust++;
-        makeRightmost();
+        make_rightmost();
 
     }
      
@@ -474,8 +481,8 @@ void up_arrow() {
         //in terminal
         if (editingHistory == 0) return;
         editingHistory--;
-        setCurTerminalLine();
-        makeRightmost();
+        set_cur_terminal_line();
+        make_rightmost();
     } else {
         //in editor
         if (curCursorY == 0) {
@@ -488,7 +495,7 @@ void up_arrow() {
         if (getLineLen() < curCursorX) {
             //bad, save
             savedCursorX = max(curCursorX, savedCursorX);
-            makeRightmost();
+            make_rightmost();
         }
     }
 }
@@ -498,17 +505,17 @@ void down_arrow() {
         //in terminal
         if (editingHistory == wt->history.size - 1) return;
         editingHistory++;
-        setCurTerminalLine();
-        makeRightmost();
+        set_cur_terminal_line();
+        make_rightmost();
     } else {
         //in editor
-        if (curCursorY == wf->size - 1) { makeRightmost(); return; }
+        if (curCursorY == wf->size - 1) { make_rightmost(); return; }
         curCursorY++;
         curCursorX = max(curCursorX, savedCursorX);
         if (getLineLen() < curCursorX) {
             //bad, save
             savedCursorX = max(curCursorX, savedCursorX);
-            makeRightmost();
+            make_rightmost();
         }
     }
 }
@@ -531,9 +538,10 @@ void right_arrow() {
 
 void insert_char(char c) {
     if (rightmost()) {
+        //printf("is rightmost x=%, size=%\n"a, curCursorX, wf->data[curCursorY].size);
         wf->data[curCursorY].push_back(c);
-    }
-    else {
+    } else {
+        //printf("is not rightmost x=%, size=%\n"a, curCursorX, wf->data[curCursorY].size);
         wf->data[curCursorY].insert(c, curCursorX);
     }
     right_arrow();
@@ -554,7 +562,7 @@ void backspace_key() {
         } else {
             if (curCursorY == 0) return;
             curCursorY--;
-            makeRightmost();
+            make_rightmost();
             ArenaArrayList<char>& r = wf->data[curCursorY + 1];
             wf->data[curCursorY].push_back_n(r.data, r.size);
             wf->erase(curCursorY + 1);
@@ -583,9 +591,7 @@ void delete_key() {
 
 bool enter_key() {
     if (terminalMode == TerminalMode::Cmd) {
-        bool ret = interpretCommand(StrA{ wf->back().data, wf->back().size });
-        newCmdLine();
-        return ret;
+        return interpretCommand(StrA{ wf->back().data, wf->back().size });
     } else {
         if (rightmost()) {
             //newline
