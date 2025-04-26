@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-#include <vector>
 #include "../Win32.h"
 
 struct DirEntry;
@@ -30,7 +28,7 @@ enum TerminalMode {
 };
 
 // All terminals
-Terminal ts[4];
+Terminal ts[6];
 
 // Current terminal state
 TerminalMode terminalMode; // Current terminal mode
