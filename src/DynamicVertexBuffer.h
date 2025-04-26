@@ -13,6 +13,7 @@ struct DrawCommand {
 	U32 vertexCount;
 	U32 indexCount;
 	U64 clipBoxesGPUAddress;
+	M4x3F32 transform;
 };
 
 enum DrawMode : U32 {
@@ -69,7 +70,7 @@ struct Tessellator {
 		buffer.destroy();
 	}
 
-	void begin_draw(VkPipeline pipeline, VkPipelineLayout pipelineLayout, DrawMode mode) {
+	void begin_draw(VkPipeline pipeline, VkPipelineLayout pipelineLayout, DrawMode mode, M4x3F32 transform) {
 		if (isCurrentlyDrawing) {
 			abort("Already drawing something, end that draw first");
 		}
@@ -85,6 +86,7 @@ struct Tessellator {
 		drawCmd.vertexCount = 0;
 		drawCmd.indexCount = 0;
 		drawCmd.clipBoxesGPUAddress = 0;
+		drawCmd.transform = transform;
 	}
 	void set_clip_boxes(U64 address) {
 		drawCommands.back().clipBoxesGPUAddress = address;
@@ -92,11 +94,12 @@ struct Tessellator {
 	void end_draw() {
 		isCurrentlyDrawing = false;
 	}
-	void draw() {
+	void draw(ProjectiveTransformMatrix viewProj) {
 		buffer.invalidate_mapped();
 
-		VK::BasicPipelineRenderData renderData;
+		VK::UIPipelineRenderData renderData;
 		renderData.screenDimensions = V2F32{ F32(VK::desktopSwapchainData.width), F32(VK::desktopSwapchainData.height) };
+		renderData.viewProj = viewProj;
 		VK::vkCmdBindIndexBuffer(VK::graphicsCommandBuffer, buffer.buffer, vertexCapacity, VK_INDEX_TYPE_UINT32);
 		VkPipeline prevPipeline = VK_NULL_HANDLE;
 		for (DrawCommand& drawCmd : drawCommands) {
@@ -105,8 +108,9 @@ struct Tessellator {
 				VK::vkCmdBindDescriptorSets(VK::graphicsCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, drawCmd.pipelineLayout, 0, 1, &VK::drawDataDescriptorSet.descriptorSet, 0, nullptr);
 			}
 			renderData.vertexBufferPointer = buffer.gpuAddress + drawCmd.vertexBufferOffset;
-			//renderData.clipBoxesPointer = drawCmd.clipBoxesGPUAddress;
-			VK::vkCmdPushConstants(VK::graphicsCommandBuffer, drawCmd.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &renderData);
+			renderData.clipBoxesPointer = drawCmd.clipBoxesGPUAddress;
+			renderData.model = drawCmd.transform;
+			VK::vkCmdPushConstants(VK::graphicsCommandBuffer, drawCmd.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::UIPipelineRenderData), &renderData);
 			VK::vkCmdDrawIndexed(VK::graphicsCommandBuffer, drawCmd.indexCount, 1, drawCmd.indexBufferOffset, 0, 0);
 		}
 		drawCommands = ArenaArrayList<DrawCommand>{};
@@ -316,6 +320,7 @@ struct Tessellator {
 		}
 		return *this;
 	}
+	/*
 	Tessellator& basic_circle(V2F32 pos, F32 radius, U32 segments, V4F32 color, U32 texIdx) {
 		DrawCommand& cmd = drawCommands.back();
 		ensure_space_for((segments + 1) * sizeof(VK::BasicVertex), segments * 3 * sizeof(U32));
@@ -350,6 +355,7 @@ struct Tessellator {
 		}
 		return *this;
 	}
+	*/
 } tessellators[VK::FRAMES_IN_FLIGHT];
 
 void init() {

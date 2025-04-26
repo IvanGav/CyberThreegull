@@ -182,6 +182,7 @@
     <ClInclude Include="src\DynamicVertexBuffer.h" />
     <ClInclude Include="src\DynamicVertexBuffer_decl.h" />
     <ClInclude Include="src\PNG.h" />
+    <ClInclude Include="src\Resources.h" />
     <ClInclude Include="src\SerializeTools.h" />
     <ClInclude Include="src\Sounds.h" />
     <ClInclude Include="src\TextRenderer.h" />
@@ -189,6 +190,8 @@
     <ClInclude Include="src\Textures_decl.h" />
     <ClInclude Include="src\UI.h" />
     <ClInclude Include="src\VK.h" />
+    <ClInclude Include="src\VKGeometry.h" />
+    <ClInclude Include="src\VKGeometry_decl.h" />
     <ClInclude Include="src\VKStaging.h" />
     <ClInclude Include="src\VKStaging_decl.h" />
     <ClInclude Include="src\VK_decl.h" />

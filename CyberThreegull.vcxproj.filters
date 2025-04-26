@@ -80,5 +80,14 @@
     <ClInclude Include="src\Win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\VKGeometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\VKGeometry_decl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

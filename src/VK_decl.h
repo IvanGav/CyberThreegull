@@ -21,6 +21,7 @@ typedef struct VkWin32SurfaceCreateInfoKHR {
 typedef VkResult(VKAPI_PTR* PFN_vkCreateWin32SurfaceKHR)(VkInstance instance, const VkWin32SurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 typedef VkBool32(VKAPI_PTR* PFN_vkGetPhysicalDeviceWin32PresentationSupportKHR)(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex);
 #pragma warning(pop)
+#include "VKGeometry_decl.h"
 #include "VKStaging_decl.h"
 
 #define CHK_VK(cmd) { VkResult chkVK_Result = cmd; if(chkVK_Result != VK_SUCCESS){ ::VK::vulkan_failure(chkVK_Result, ""); } }
@@ -136,6 +137,10 @@ VK_DEBUG_FUNCTIONS
 VK_DEVICE_FUNCTIONS
 #undef X
 
+static constexpr U32 VERTEX_FORMAT_POS3F_TEX2F_NORM3F_TAN3F_SIZE = sizeof(V3F32) + sizeof(V2F32) + sizeof(V3F32) + sizeof(V3F32);
+static constexpr U32 VERTEX_FORMAT_INDEX4u8_WEIGHT4unorm8_SIZE = sizeof(U8) * 4 + sizeof(U8) * 4;
+static constexpr U32 VERTEX_FORMAT_POS3F_NORM3F_TAN3F_SIZE = sizeof(V3F32) + sizeof(V3F32) + sizeof(V3F32);
+
 const U32 FRAMES_IN_FLIGHT = 2;
 
 extern U32 currentFrameInFlight;
@@ -219,6 +224,11 @@ extern U32 computeFamily;
 extern VkQueue graphicsQueue;
 extern VkQueue transferQueue;
 extern VkQueue computeQueue;
+
+extern VKStaging::GPUUploadStager graphicsStager;
+extern VKGeometry::GeometryHandler geometryHandler;
+extern VKGeometry::UniformMatricesHandler uniformMatricesHandler;
+
 
 void vulkan_failure(VkResult result, const char* msg);
 

@@ -5,6 +5,17 @@
 #pragma warning(push, 0)
 #include <Windows.h>
 #include <hidusage.h>
+UINT
+WINAPI
+timeBeginPeriod(
+	_In_ UINT uPeriod
+);
+
+UINT
+WINAPI
+timeEndPeriod(
+	_In_ UINT uPeriod
+);
 #pragma warning(pop)
 #include "DrillLib.h"
 
@@ -184,7 +195,11 @@ enum Key {
 USER32_FUNCTIONS
 #undef X
 
+decltype(timeBeginPeriod)* pTimeBeginPeriod;
+decltype(timeEndPeriod)* pTimeEndPeriod;
+
 HMODULE user32DLL;
+HMODULE winmmDLL;
 HINSTANCE instance;
 HWND window;
 U32 windowWidth;
@@ -267,7 +282,6 @@ void set_cursor(CursorType newCursor) {
 }
 void set_mouse_captured(B32 captured) {
 	if (captured) {
-		mouseCaptured = true;
 		pSetCapture(window);
 		POINT cursorPos;
 		pGetCursorPos(&cursorPos);
@@ -275,6 +289,7 @@ void set_mouse_captured(B32 captured) {
 		mouseCaptureY = cursorPos.y;
 		pSetCursorPos(mouseCaptureX, mouseCaptureY);
 		set_cursor(CURSOR_TYPE_NONE);
+		mouseCaptured = true;
 	} else {
 		mouseCaptured = false;
 		pReleaseCapture();
@@ -489,6 +504,7 @@ B32 init(U32 width, U32 height, void (*resizeDrawCallbackIn)(void), void (*keybo
 	B32 success = true;
 	instance = GetModuleHandleA(nullptr);
 	user32DLL = LoadLibraryA("User32.dll");
+	winmmDLL = LoadLibraryA("Winmm.dll");
 	if (user32DLL == NULL) {
 		success = false;
 	} else {
@@ -553,6 +569,10 @@ B32 init(U32 width, U32 height, void (*resizeDrawCallbackIn)(void), void (*keybo
 
 		currentCursorType = CURSOR_TYPE_POINTER;
 		oldMouseX = oldMouseY = -1;
+	}
+	if (winmmDLL) {
+		pTimeBeginPeriod = reinterpret_cast<decltype(pTimeBeginPeriod)>(reinterpret_cast<void*>(GetProcAddress(winmmDLL, "timeBeginPeriod")));
+		pTimeEndPeriod = reinterpret_cast<decltype(pTimeEndPeriod)>(reinterpret_cast<void*>(GetProcAddress(winmmDLL, "timeEndPeriod")));
 	}
 	return success;
 }
