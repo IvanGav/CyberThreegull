@@ -23,6 +23,7 @@ struct DirEntry {
 struct Terminal {
     Dir root; // Root directory of this terminal
     File history; // Command history
+    File io; // IO history
 };
 
 enum TerminalMode {
@@ -70,7 +71,10 @@ int getOffset(int height);
 int seek(StrA str, int& from, int& len);
 StrA vecToStrA(ArenaArrayList<char>& list);
 StrA fileToStrA(File& f);
+void io_print(File& f, StrA s);
+ArenaArrayList<char> strAToVec(StrA s);
 bool interpretCommand(StrA cmd);
+void print_help();
 int getLineLen();
 void create_file(StrA name, bool isDir);
 bool close_file();
@@ -127,6 +131,9 @@ void openTerminal(int terminal) {
 
 //get a pointer to a vector of strings to draw
 File& getTerminal() {
+    if (terminalMode == TerminalMode::Cmd) {
+        return wt->io;
+    }
     return *wf;
 }
 
@@ -214,6 +221,17 @@ StrA fileToStrA(File& f) {
     return vecToStrA(buf);
 }
 
+// do not modify the returned arrays FOR THE LOVE OF GOD
+ArenaArrayList<char> strAToVec(StrA s) {
+    ArenaArrayList<char> b{};
+    b.data = const_cast<char*>(s.str);
+    b.size = s.length;
+}
+
+void io_print(File& f, StrA s) {
+    f.push_back(strAToVec(s));
+}
+
 /*
     Internal
 */
@@ -224,11 +242,68 @@ bool interpretCommand(StrA cmd) {
     int from = 0;
     int cmdsize;
     seek(cmd, from, cmdsize);
+
+    File& io = wt->io;
     
-    //if(cmd.substr(0,cmdsize) == "")
+    if (cmd.substr(from, cmdsize) == "dir"a || cmd.substr(from, cmdsize) == "l"a) {
+        
+    } else if (cmd.substr(from, cmdsize) == "help"a) {
+        print_help();
+    } else if (cmd.substr(from, cmdsize) == "vim"a) {
+
+    } else if (cmd.substr(from, cmdsize) == "mkdir"a) {
+
+    } else if (cmd.substr(from, cmdsize) == "cat"a) {
+
+    } else if (cmd.substr(from, cmdsize) == "exit"a) {
+
+    } else if (cmd.substr(from, cmdsize) == "pwd"a) {
+
+    } else if (cmd.substr(from, cmdsize) == "exec"a) {
+
+    } else if (cmd.substr(from, cmdsize) == "touch"a) {
+
+    } else if (cmd.substr(from, cmdsize) == "clear"a) {
+
+    } else {
+        io.push_back(""a)
+    }
 
     new_cmd_line();
     return false;
+}
+
+void print_help() {
+    File& io = wt->io;
+    io.push_back(" >help");
+    io.push_back("  Display this message");
+
+    io.push_back(" >clear");
+    io.push_back("  Clear the terminal");
+
+    io.push_back(" >dir/l [dir]");
+    io.push_back("  List all files in a directory");
+
+    io.push_back(" >cat <file>");
+    io.push_back("  Print file's contents");
+
+    io.push_back(" >vim <file>");
+    io.push_back("  Open a file in an editor");
+
+    io.push_back(" >touch <file>");
+    io.push_back("  Create a file");
+
+    io.push_back(" >mkdir <dir>");
+    io.push_back("  Create a directory");
+
+    io.push_back(" >pwd");
+    io.push_back("  Print the working directory");
+
+    io.push_back(" >exec <file>");
+    io.push_back("  Execute a file");
+
+    io.push_back(" >exit");
+    io.push_back("  Exit");
 }
 
 int getLineLen() {
