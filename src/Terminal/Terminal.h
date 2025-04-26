@@ -416,7 +416,7 @@ void tab_key() {
 	if (files.size == 1) {
 		// if there is only one match just update the  updatedLine
 		tabbedInput = files[0].skip(inputToTabSize); // get the rest of the file name
-        updatedLine->push_back(tabbedInput); // add the tabbed input to the line
+        updatedLine->push_back_n(tabbedInput.str, tabbedInput.length); // add the tabbed input to the line
 
         // Update the cursor position
         curCursorX += tabbedInput.length;
@@ -459,7 +459,7 @@ void tab_key() {
 			break;
 		}
 
-        updatedLine->push_back(mostCommonPrefix.prefix); // add the common prefix to the line
+        updatedLine->push_back_n(mostCommonPrefix.prefix.str, mostCommonPrefix.prefix.length); // add the common prefix to the line
         curCursorX++;
         lineAdjust++;
         makeRightmost();
