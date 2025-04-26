@@ -30,6 +30,11 @@ enum TerminalMode {
     Editor, // Text file editing
 };
 
+struct TabInfo {
+    StrA portion;
+    int index;
+};
+
 // All terminals
 Terminal ts[6];
 
@@ -380,17 +385,43 @@ ArenaArrayList<StrA> find_files(StrA match) {
 	return files;
 }
 
-StrA findInputToTab() {
+
+
+TabInfo findInputToTab() {
 	// Find the last space in the line
 	StrA fullLine = vecToStrA(wf->back()); // get the full line
     StrA currentLine = (fullLine++)++; // removes the prompt
-	int indexLastSpace = currentLine.find(" "a); // get index of last space, -1 if none
-	StrA inputToTab = (indexLastSpace == -1) ? currentLine : currentLine.skip(indexLastSpace + 1); // actual input to tab
-	return inputToTab;
+	int indexNextSpace = currentLine.find(" "a); // get index of last space, -1 if none
+	int indexNextSpace = (indexNextSpace == -1) ? 0 : indexNextSpace; // if no space, set to 0
+	StrA inputToTab = currentLine.slice(indexNextSpace, currentLine.length);
+
+    // Find the next space of current inputToTab to make segment wante 
+	int indexNextSpace2 = inputToTab.find(" "a); // get index of last space, -1 if none
+	if (indexNextSpace2 != -1) {
+		inputToTab = inputToTab.slice(0, indexNextSpace2 - 1); // get the input to tab
+	}
+
+	TabInfo tabInfo = { inputToTab, indexNextSpace + 2 }; // +2 to account for the prompt
+
+    return tabInfo; 
+}
+
+StrA add_two_stra(StrA str1, StrA str2) {
+	MemoryArena& arena = get_scratch_arena(); // Get a memory arena for temporary allocations
+	StrA concatenated = StrA{
+		arena.alloc<char>(str1.length + str2.length), // Allocate memory
+		str1.length + str2.length
+	};
+	// Copy the first string
+	memcpy((void*)concatenated.str, str1.str, str1.length);
+	// Copy the second string
+	memcpy((void*)(concatenated.str + str1.length), str2.str, str2.length);
+	return concatenated;
 }
 
 
 void tab_key() {
+
 	if (terminalMode == TerminalMode::Editor) {
 		return;
 	}
@@ -402,7 +433,8 @@ void tab_key() {
     ArenaArrayList<char>* updatedLine = &wf->back();
 
 	// Finding the section of the line that needs to be autocompleted(tabbed)
-    StrA inputToTab = findInputToTab();
+	TabInfo tabInfo = findInputToTab();
+	StrA inputToTab = tabInfo.portion; // get the input to tab
 	int inputToTabSize = inputToTab.length; // size of the input to tab
     StrA tabbedInput = ""a;
 	
@@ -414,25 +446,17 @@ void tab_key() {
 
 	// We have match
 	if (files.size == 1) {
-		// if there is only one match just update the  updatedLine
 		tabbedInput = files[0].skip(inputToTabSize); // get the rest of the file name
-        updatedLine->push_back_n(tabbedInput.str, tabbedInput.length); // add the tabbed input to the line
-
-        // Update the cursor position
-        curCursorX += tabbedInput.length;
-        makeRightmost();
-        return;
+        goto onematch;
 	}
-			// More than one match
-            // IMPLEMENT TODO 
-    while (1) {
+    // There is more than one match
+    while(true){
         struct Prefix {
             StrA prefix;
             int count;
         };
 
         int lineAdjust = 0;
-
         // Find the longest common prefix
         Prefix mostCommonPrefix = { ""a, -1 };
         Prefix currCommonPrefix = { ""a, -1 };
@@ -459,14 +483,15 @@ void tab_key() {
 			break;
 		}
 
-        updatedLine->push_back_n(mostCommonPrefix.prefix.str, mostCommonPrefix.prefix.length); // add the common prefix to the line
-        curCursorX++;
+        tabbedInput = add_two_stra(tabbedInput, mostCommonPrefix.prefix);
         lineAdjust++;
-        makeRightmost();
 
     }
-     
+	
+    onematch:; // goto label for one match 
 
+    updatedLine->insert(tabbedInput.str, tabInfo.index); // add the tabbed input to the line
+	curCursorX += tabbedInput.length; // move the cursor to end of input
 }
 
 void up_arrow() {
