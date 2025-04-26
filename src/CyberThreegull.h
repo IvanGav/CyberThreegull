@@ -30,6 +30,16 @@ V2F32 userMouse;
 ArenaArrayList<VKGeometry::StaticModel> staticModelsToRender;
 ArenaArrayList<VKGeometry::SkeletalModel*> skeletalModelsToRender;
 
+I32 inTerminalIdx = -1;
+
+struct TermInterface {
+	V3F32 p1;
+	V3F32 p2;
+	V3F32 p3;
+};
+
+TermInterface term0{ {-5.78971F,0.07619F,-5.27076F}, {-5.78971F,0.992912F,-5.27076F}, {-5.1248F, 0.07619F, -6.42548F} };
+
 struct LineCollider {
 	V2F32 a;
 	V2F32 b;
@@ -74,8 +84,17 @@ DWORD WINAPI audio_thread_func(LPVOID) {
 
 void keyboard_callback(Win32::Key key, Win32::ButtonState state) {
 	V2F32 mousePos = Win32::get_mouse();
-	if (state == Win32::BUTTON_STATE_DOWN) {
-		typeChar(key, Win32::key_to_typed_char(key));
+	if (state == Win32::BUTTON_STATE_DOWN && inTerminalIdx != -1) {
+		if (typeChar(key, Win32::key_to_typed_char(key))) {
+			inTerminalIdx = -1;
+		}
+	}
+	if (key == Win32::KEY_E && state == Win32::BUTTON_STATE_DOWN && inTerminalIdx == -1) {
+		V2F32 interT1 = ray_intersect_rect(term0.p1, term0.p3 - term0.p1, term0.p2 - term0.p1, V3F32{ player.pos.x, 0.5F, player.pos.y }, V3F32{ player.forward.x, 0.0F, player.forward.y });
+		if (interT1.x >= 0.0F && interT1.y >= 0.0F && interT1.x <= 1.0F && interT1.y <= 1.0F) {
+			openTerminal(0);
+			inTerminalIdx = 0;
+		}
 	}
 }
 void mouse_callback(Win32::MouseButton button, Win32::MouseValue state) {
@@ -91,7 +110,58 @@ void setup_scene() {
 	player.yaw = 0.25F;
 	player.radius = 0.25F;
 
-	colliders.push_back(LineCollider{ {1.0F, 1.0F}, {1.0F, 5.0F} });
+	colliders.push_back(LineCollider{ {-8.0F, 8.0F}, {-8.0F, -8.0F} });
+	colliders.push_back(LineCollider{ {-8.0F, 8.0F}, {8.0F, 8.0F} });
+	colliders.push_back(LineCollider{ {8.0F, -8.0F}, {8.0F, 8.0F} });
+	colliders.push_back(LineCollider{ {8.0F, -8.0F}, {8.0F, 8.0F} });
+	colliders.push_back(LineCollider{ {8.0F, -8.0F}, {4.0F, -8.0F} });
+	colliders.push_back(LineCollider{ {-8.0F, -8.0F}, {2.0F, -8.0F} });
+	colliders.push_back(LineCollider{ {-4.0F, -14.0F}, {2.0F, -8.0F} });
+	colliders.push_back(LineCollider{ {-4.0F, -14.0F}, {-4.0F, -16.0F} });
+	colliders.push_back(LineCollider{ {5.0F, -16.0F}, {4.0F, -8.0F} });
+	colliders.push_back(LineCollider{ {5.0F, -16.0F}, {20.0F, -16.0F} });
+	colliders.push_back(LineCollider{ {20.0F, -55.0F}, {20.0F, -16.0F} });
+	colliders.push_back(LineCollider{ {20.0F, -55.0F}, {20.0F, -16.0F} });
+	colliders.push_back(LineCollider{ {20.0F, -55.0F}, {5.0F, -55.0F} });
+	colliders.push_back(LineCollider{ {20.0F, -55.0F}, {5.0F, -55.0F} });
+	colliders.push_back(LineCollider{ {2.0F, -71.0F}, {5.0F, -55.0F} });
+	colliders.push_back(LineCollider{ {2.0F, -71.0F}, {14.0F, -75.0F} });
+	colliders.push_back(LineCollider{ {17.0F, -81.0F}, {14.0F, -75.0F} });
+	colliders.push_back(LineCollider{ {17.0F, -81.0F}, {14.0F, -89.0F} });
+	colliders.push_back(LineCollider{ {2.5F, -92.0F}, {14.0F, -89.0F} });
+	colliders.push_back(LineCollider{ {2.5F, -92.0F}, {2.0F, -100.0F} });
+	colliders.push_back(LineCollider{ {15.0F, -102.0F}, {2.0F, -100.0F} });
+	colliders.push_back(LineCollider{ {15.0F, -102.0F}, {22.0F, -111.0F} });
+	colliders.push_back(LineCollider{ {18.0F, -123.0F}, {22.0F, -111.0F} });
+	colliders.push_back(LineCollider{ {18.0F, -123.0F}, {2.0F, -127.0F} });
+	colliders.push_back(LineCollider{ {2.0F, -135.0F}, {2.0F, -127.0F} });
+	colliders.push_back(LineCollider{ {2.0F, -135.0F}, {11.0F, -135.0F} });
+	colliders.push_back(LineCollider{ {11.0F, -155.0F}, {11.0F, -135.0F} });
+	colliders.push_back(LineCollider{ {11.0F, -155.0F}, {3.0F, -155.0F} });
+	colliders.push_back(LineCollider{ {2.0F, -187.0F}, {3.0F, -155.0F} });
+	colliders.push_back(LineCollider{ {2.0F, -187.0F}, {12.0F, -188.0F} });
+	colliders.push_back(LineCollider{ {12.0F, -192.0F}, {12.0F, -188.0F} });
+	colliders.push_back(LineCollider{ {12.0F, -192.0F}, {-12.0F, -192.0F} });
+	colliders.push_back(LineCollider{ {-12.0F, -188.0F}, {-12.0F, -192.0F} });
+	colliders.push_back(LineCollider{ {-12.0F, -188.0F}, {-2.0F, -187.0F} });
+	colliders.push_back(LineCollider{ {-1.0F, -155.0F}, {-2.0F, -187.0F} });
+	colliders.push_back(LineCollider{ {-1.0F, -155.0F}, {-8.5F, -155.0F} });
+	colliders.push_back(LineCollider{ {-8.0F, -135.0F}, {-8.5F, -155.0F} });
+	colliders.push_back(LineCollider{ {-8.7F, -135.0F}, {-2.5F, -135.0F} });
+	colliders.push_back(LineCollider{ {-2.5F, -127.0F}, {-2.5F, -135.0F} });
+	colliders.push_back(LineCollider{ {-2.5F, -127.0F}, {-15.0F, -123.5F} });
+	colliders.push_back(LineCollider{ {-21.0F, -116.0F}, {-15.0F, -123.5F} });
+	colliders.push_back(LineCollider{ {-21.0F, -116.0F}, {-15.0F, -105.0F} });
+	colliders.push_back(LineCollider{ {-2.0F, -101.5F}, {-15.0F, -105.0F} });
+	colliders.push_back(LineCollider{ {-2.0F, -101.5F}, {-1.3F, -91.0F} });
+	colliders.push_back(LineCollider{ {-11.5F, -88.5F}, {-1.3F, -91.0F} });
+	colliders.push_back(LineCollider{ {-11.5F, -88.5F}, {-15.0F, -82.0F} });
+	colliders.push_back(LineCollider{ {-11.0F, -75.0F}, {-15.0F, -82.0F} });
+	colliders.push_back(LineCollider{ {-11.0F, -75.0F}, {-2.0F, -72.0F} });
+	colliders.push_back(LineCollider{ {-3.0F, -55.0F}, {-2.0F, -72.0F} });
+	colliders.push_back(LineCollider{ {-3.0F, -55.0F}, {-18.0F, -55.0F} });
+	colliders.push_back(LineCollider{ {-18.0F, -16.0F}, {-18.0F, -55.0F} });
+	colliders.push_back(LineCollider{ {-18.0F, -16.0F}, {-3.5F, -16.44F} });
 }
 
 void draw_world() {
@@ -106,6 +176,14 @@ void draw_world() {
 			draw_static_model(model);
 		}
 	}
+	{
+		VKGeometry::StaticModel model;
+		VKGeometry::make_static_model(&model, Resources::cubeMesh);
+		model.transform.translate(term0.p1);
+		model.transform.scale({ 0.1F, 0.1F, 0.1F });
+		model.color = V4F32{ 1.0F, 0.0F, 0.0F, 1.0F };
+		draw_static_model(model);
+	}
 }
 
 void update_world() {
@@ -115,29 +193,32 @@ void update_world() {
 	player.forward = V2F32{ sinf32(player.yaw), -cosf32(player.yaw) };
 	player.right = V2F32{ sinf32(player.yaw + 0.25F), -cosf32(player.yaw + 0.25F) };
 	player.velocity = {};
-	if (Win32::keyboardState[Win32::KEY_W]) {
-		player.velocity += player.forward * 5.0F;
-	}
-	if (Win32::keyboardState[Win32::KEY_A]) {
-		player.velocity += -player.right * 5.0F;
-	}
-	if (Win32::keyboardState[Win32::KEY_S]) {
-		player.velocity += -player.forward * 5.0F;
-	}
-	if (Win32::keyboardState[Win32::KEY_D]) {
-		player.velocity += player.right * 5.0F;
-	}
-	V2F32 step = player.velocity * deltaTime;
-	V2F32 newPos = player.pos + step;
-	for (LineCollider c : colliders) {
-		V2F32 closest = closest_on_segment(newPos, c);
-		if (distance_sq(closest, newPos) >= player.radius * player.radius) {
-			continue;
+	
+	if (inTerminalIdx == -1) {
+		if (Win32::keyboardState[Win32::KEY_W]) {
+			player.velocity += player.forward * 5.0F;
 		}
-		step += normalize(newPos - closest) * (player.radius - length(newPos - closest));
-		newPos = player.pos + step;
+		if (Win32::keyboardState[Win32::KEY_A]) {
+			player.velocity += -player.right * 5.0F;
+		}
+		if (Win32::keyboardState[Win32::KEY_S]) {
+			player.velocity += -player.forward * 5.0F;
+		}
+		if (Win32::keyboardState[Win32::KEY_D]) {
+			player.velocity += player.right * 5.0F;
+		}
+		V2F32 step = player.velocity * deltaTime;
+		V2F32 newPos = player.pos + step;
+		for (LineCollider c : colliders) {
+			V2F32 closest = closest_on_segment(newPos, c);
+			if (distance_sq(closest, newPos) >= player.radius * player.radius) {
+				continue;
+			}
+			step += normalize(newPos - closest) * (player.radius - length(newPos - closest));
+			newPos = player.pos + step;
+		}
+		player.pos = newPos;
 	}
-	player.pos = newPos;
 }
 
 void do_frame() {
@@ -256,6 +337,14 @@ void do_frame() {
 			VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
 			Resources::rooms.draw_named(cmdBuf, Textures::textureNames[i].name);
 		}
+
+		for (U32 i = 0; i < ARRAY_COUNT(Textures::colorNames); i++) {
+			modelInfo.texIdx = Textures::simpleWhite.index;
+			V3F32 local = Textures::colorNames[i].color / 255;
+			modelInfo.packedColor = pack_unorm4x8(V4F32{ local.x, local.y, local.z, 1.0F });
+			VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
+			Resources::rooms.draw_named(cmdBuf, Textures::colorNames[i].name);
+		}
 		
 
 
@@ -264,12 +353,17 @@ void do_frame() {
 		{
 			M4x3F32 textTransform;
 			textTransform.set_identity();
+			textTransform.translate(term0.p2);
+			textTransform.set_row(0, -normalize(term0.p3 - term0.p1));
+			textTransform.set_row(1, normalize(term0.p2 - term0.p1));
+			textTransform.set_row(2, V3F32{0.0F, 0.0F, 1.0F});
+			textTransform.transpose_rotation();
 			File& f = getTerminal();
 			tes.begin_draw(VK::uiPipeline, VK::uiPipelineLayout, DynamicVertexBuffer::DRAW_MODE_QUADS, textTransform);
 			F32 offset = 0.0F;
 			for (ArenaArrayList<char>& s : f) {
-				TextRenderer::draw_string_batched(tes, StrA{ s.data, s.size }, 0.0F, offset, 0.0F, 1.0F, V4F32{ 1.0F, 1.0f, 1.0F, 1.0F }, 0);
-				offset += 1.0F;
+				TextRenderer::draw_string_batched(tes, StrA{ s.data, s.size }, 0.03F, offset, -0.01F, 0.05F, V4F32{ 0.0F, 0.0f, 0.0F, 1.0F }, 0);
+				offset += 0.05F;
 			}
 			tes.end_draw();
 		}

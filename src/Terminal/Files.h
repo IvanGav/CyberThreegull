@@ -112,7 +112,6 @@ void anxiety_facts(File& io) {
     io_print(io, "Treatment options include therapy, medication, and lifestyle changes."a);
 }
 
-
 // Brainrot: Remove the latest digital brainrots from memory
 // Brainrot: Remove TikTok-related memes and brainrots from memory
 void brainrot(File& io) {
