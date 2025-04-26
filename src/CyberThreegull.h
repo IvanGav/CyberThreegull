@@ -256,6 +256,14 @@ void do_frame() {
 			VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
 			Resources::rooms.draw_named(cmdBuf, Textures::textureNames[i].name);
 		}
+
+		for (U32 i = 0; i < ARRAY_COUNT(Textures::colorNames); i++) {
+			modelInfo.texIdx = Textures::simpleWhite.index;
+			V3F32 local = Textures::colorNames[i].color / 255;
+			modelInfo.packedColor = pack_unorm4x8(V4F32{ local.x, local.y, local.z, 1.0F });
+			VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
+			Resources::rooms.draw_named(cmdBuf, Textures::colorNames[i].name);
+		}
 		
 
 
