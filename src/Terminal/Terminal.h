@@ -76,7 +76,16 @@ StrA fileToStrA(File& f);
 void io_print(File& f, StrA s);
 ArenaArrayList<char> strAToVec(StrA s);
 bool interpretCommand(StrA cmd);
+void print_dir();
 void print_help();
+void vim();
+void mkdir();
+void cat();
+bool exit();
+void pwd();
+void exec();
+void touch();
+void clear();
 int getLineLen();
 void create_file(StrA name, bool isDir);
 bool close_file();
@@ -178,6 +187,7 @@ void terminalsInit() {
 void openTerminal(int terminal) {
     terminalMode = TerminalMode::Cmd;
     wt = &ts[terminal];
+    wd = &wt->root;
     wf = &wt->io;
     curCursorX = 2;
     curCursorY = wf->size - 1;
@@ -296,39 +306,58 @@ void io_print(File& f, StrA s) {
 
 // Given a command, interpret it. Return false.
 bool interpretCommand(StrA cmd) {
-    cmd++; cmd++;
     int from = 0;
     int cmdsize;
     seek(cmd, from, cmdsize);
 
     File& io = wt->io;
     
-    if (cmd.substr(from, cmdsize) == "dir"a || cmd.substr(from, cmdsize) == "l"a) {
-        
-    } else if (cmd.substr(from, cmdsize) == "help"a) {
+    if (cmd.substr(0, cmdsize) == "dir"a || cmd.substr(0, cmdsize) == "l"a) {
+        print_dir();
+    } else if (cmd.substr(0, cmdsize) == "help"a) {
         print_help();
-    } else if (cmd.substr(from, cmdsize) == "vim"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "mkdir"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "cat"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "exit"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "pwd"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "exec"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "touch"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "clear"a) {
-
+    } else if (cmd.substr(0, cmdsize) == "vim"a) {
+        vim();
+    } else if (cmd.substr(0, cmdsize) == "mkdir"a) {
+        mkdir();
+    } else if (cmd.substr(0, cmdsize) == "cat"a) {
+        cat();
+    } else if (cmd.substr(0, cmdsize) == "exit"a) {
+        exit();
+    } else if (cmd.substr(0, cmdsize) == "pwd"a) {
+        pwd();
+    } else if (cmd.substr(0, cmdsize) == "cd"a) {
+        seek(cmd, from, cmdsize);
+        StrA dir{cmd.str+from-cmdsize, cmdsize};
+        change_dir(dir);
+    } else if (cmd.substr(0, cmdsize) == "exec"a) {
+        exec();
+    } else if (cmd.substr(0, cmdsize) == "touch"a) {
+        touch();
+    } else if (cmd.substr(0, cmdsize) == "clear"a) {
+        clear();
     } else {
         io_print(io, "No such command exists."a);
     }
 
     new_cmd_line();
     return false;
+}
+
+void print_dir() {
+	File& io = wt->io;
+	if (wd->size == 0) {
+		io_print(io, "No files in this directory."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.isDir) {
+			io_print(io, e.name);
+		}
+		else {
+			io_print(io, e.name);
+		}
+	}
 }
 
 void print_help() {
@@ -362,6 +391,112 @@ void print_help() {
 
     io_print(io, " >exit"a);
     io_print(io, "  Exit"a);
+}
+
+void vim() {
+    File& io = wt->io;
+    int cmdsize = 3;
+    int from = 0;
+    ArenaArrayList<char> cmd = wt->history.back();
+    StrA cmdStr = vecToStrA(cmd);
+    seek(cmdStr, from, cmdsize);
+    StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
+
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+
+	for (DirEntry& e : *wd) {
+        if (open_file(file)) {
+            return;
+        }
+	}
+    io_print(io, "File not found."a);
+}
+
+void mkdir() {
+	File& io = wt->io;
+    int cmdsize = 5;
+	int from = 0;
+	ArenaArrayList<char> cmd = wt->history.back();
+	StrA cmdStr = vecToStrA(cmd);
+	seek(cmdStr, from, cmdsize);
+	StrA dir = vecToStrA(wt->history.back()).substr(cmdsize,cmdStr.length - 1);
+
+	if (dir.is_empty()) {
+		io_print(io, "No directory name specified."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.name == dir && e.isDir) {
+			io_print(io, "Directory already exists."a);
+			return;
+		}
+	}
+	create_file(dir, true);
+}
+
+
+// Print out file 
+void cat() {
+	File& io = wt->io;
+	int cmdsize = 4;
+	int from = 0;
+	ArenaArrayList<char> cmd = wt->history.back();
+	StrA cmdStr = vecToStrA(cmd);
+	seek(cmdStr, from, cmdsize);
+	StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.name == file && !e.isDir) {
+			io_print(io, fileToStrA(*e.file));
+			return;
+		}
+	}
+	io_print(io, "File not found."a);
+}
+
+bool exit() {
+    return true;
+}
+
+void pwd() {
+
+
+}
+
+void exec() {
+
+}
+
+void touch() {
+	File& io = wt->io;
+	int cmdsize = 6;
+	int from = 0;
+	ArenaArrayList<char> cmd = wt->history.back();
+	StrA cmdStr = vecToStrA(cmd);
+	seek(cmdStr, from, cmdsize);
+	StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.name == file && !e.isDir) {
+			io_print(io, "File already exists."a);
+			return;
+		}
+	}
+	create_file(file, false);
+}
+
+void clear() {
+	File& io = wt->io;
+	io.clear();
 }
 
 int getLineLen() {
@@ -402,6 +537,7 @@ bool open_file(StrA file) {
         if (e.name == file && !e.isDir) {
             wf = e.file;
             curCursorX = getLineLen();
+            curCursorY = 0;
             curOffset = -1;
             terminalMode = TerminalMode::Editor;
             return true;
@@ -465,7 +601,6 @@ void set_cur_terminal_line() {
     wt->io.back().push_back_n(data.data, data.size);
 
     curCursorY = wt->io.size - 1;
-    editingHistory = wt->history.size - 1;
     make_rightmost();
 }
 
@@ -473,6 +608,7 @@ void set_cur_terminal_line() {
 void new_cmd_line() {
     wt->history.push_back(ArenaArrayList<char>{});
     wt->io.push_back(ArenaArrayList<char>{});
+    editingHistory = wt->history.size - 1;
     set_cur_terminal_line();
 }
 

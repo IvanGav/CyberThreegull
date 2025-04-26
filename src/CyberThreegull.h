@@ -265,11 +265,24 @@ void do_frame() {
 				pack_unorm4x8(V4F32{1.0F, 1.0F, 1.0F, 1.0F})
 		};
 		VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
-		Resources::rooms.draw_all(cmdBuf);
-		modelInfo.texIdx = Textures::brainTexture.index;
-		VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
-		//Resources::rooms.draw_named(cmdBuf, "Sphere.001"a);
+		//Resources::rooms.draw_all(cmdBuf);
 		
+		for (U32 i = 0; i < ARRAY_COUNT(Textures::textures); i++) {
+			modelInfo.texIdx = Textures::textures[i].index;
+			VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
+			Resources::rooms.draw_named(cmdBuf, Textures::textureNames[i].name);
+		}
+
+		for (U32 i = 0; i < ARRAY_COUNT(Textures::colorNames); i++) {
+			modelInfo.texIdx = Textures::simpleWhite.index;
+			V3F32 local = Textures::colorNames[i].color / 255;
+			modelInfo.packedColor = pack_unorm4x8(V4F32{ local.x, local.y, local.z, 1.0F });
+			VK::vkCmdPushConstants(cmdBuf, VK::basicPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VK::BasicPipelineRenderData), &modelInfo);
+			Resources::rooms.draw_named(cmdBuf, Textures::colorNames[i].name);
+		}
+		
+
+
 		DynamicVertexBuffer::Tessellator& tes = DynamicVertexBuffer::get_tessellator();
 
 		printf("x%\n"a, distance(term0.p1, term0.p3));

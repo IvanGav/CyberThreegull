@@ -14,13 +14,96 @@ struct NameTex {
 };
 
 NameTex textureNames[]{
-	{ "Spehre.001"a, "Brain Texture"a },
-	{ "Spehre.001"a, "Brain Texture"a },
-	{ "Spehre.001"a, "Brain Texture"a },
-	{ "Spehre.001"a, "Brain Texture"a },
-	{ "Spehre.001"a, "Brain Texture"a },
-	{ "Spehre.001"a, "Brain Texture"a },
+	{ "Sphere.001"a, "Brain Texture.png"a },
+	{ "LOL.001"a, "images/LOL.png"a },
+	{ "Microwave.001"a, "microwave.png"a },
+	{ "Room.001"a, "room.png"a },
+	{ "Terminal.001"a, "Terminal_screen.png"a },
+	{ "Andrew_tate"a, "images/Untitled (15).png"a },
+	{ "Room.002"a, "images/gandr-collage.png"a },
+	{ "Terminal.002"a, "Terminal_screen.png"a },
+	{ "Fridge_2.001"a, "sewer.png"a },
+	{ "exit.001"a, "sewer.png"a },
+	{ "Sphere.002"a, "Brainrot Texture.png"a },
+	{ "terminal"a, "Terminal_screen.png"a },
+	{ "To_Do_List.001"a, "ToDo List.png"a },
+	{ "2435"a, "images/brainrot/2435.png"a },
+	{ "3432"a, "images/brainrot/3432.png"a },
+	{ "6543"a, "images/brainrot/6543.png"a },
+//	{ "12344"a, "images/brainrot/12344.png"a },
+	{ "25435"a, "images/brainrot/25435.png"a },
+	{ "43243"a, "images/brainrot/43243.png"a },
+	{ "254543"a, "images/brainrot/254543.png"a },
+	{ "266654"a, "images/brainrot/266654.png"a },
+	{ "543254"a, "images/brainrot/543254.png"a },
+	{ "5432543"a, "images/brainrot/5432543.png"a },
+	{ "6543654"a, "images/brainrot/6543654.png"a },
+	{ "54325432"a, "images/brainrot/54325432.png"a },
+	{ "54326432"a, "images/brainrot/54326432.png"a },
+	{ "bgfdb"a, "images/brainrot/bgfdb.png"a },
+	{ "bgfdhgdf"a, "images/brainrot/bgfdhgdf.png"a },
+	{ "brttd"a, "images/brainrot/brttd.png"a },
+	{ "bvxcbvcx"a, "images/brainrot/bvxcbvcx.png"a },
+	{ "feaef"a, "images/brainrot/feaef.png"a },
+	{ "Cylinder.032"a, "Terminal_screen.png"a },
+	{ "ffres"a, "images/brainrot/ffres.png"a },
+	{ "fsfds"a, "images/brainrot/fsfds.png"a },
+	{ "gggsgf"a, "images/brainrot/gggsgf.png"a },
+	{ "ggtr"a, "images/brainrot/ggtr.png"a },
+	{ "hhdfgd"a, "images/brainrot/hhdfgd.png"a },
+	{ "hsfrs"a, "images/brainrot/hsfrs.png"a },
+	{ "tgfs"a, "images/brainrot/tgfs.png"a },
+	{ "tretwre"a, "images/brainrot/tretwre.png"a },
+	{ "unknown"a, "images/brainrot/unknown.png"a },
+	{ "vfsfvfsd"a, "images/brainrot/vfsfvfsd.png"a },
+	{ "Badge"a, "badge.png"a },
+	{ "Cell_Door_2"a, "Elevator.png"a },
+	{ "Office"a, "Insecurity Room.png"a },
+	{ "Terminal.004"a, "Terminal_screen.png"a },
+	{ "Anxiety_Room"a, "anxiety room.png"a },
+	{ "Lever"a, "lever.png"a },
+	{ "Prompt_Management_Door"a, "Prompt Management Door.png"a },
+	{ "Terminal.003"a, "Terminal_screen.png"a },
+	{ "Trolley_Sign"a, "images/trolley problem.png"a },
 };
+
+struct NameColor {
+	StrA name;
+	V3F32 color;
+};
+
+NameColor colorNames[]{
+	{"Blanket.001"a,{20, 20, 20}},
+	{"Curtain_1.001"a,{0, 0, 0}},
+	{"Curtain_2.001"a,{0, 0, 0}},
+	{"Fridge.001"a,{255, 255, 255}},
+	{"light_cable.001"a,{117, 117, 117}},
+	{"light_holder.001"a,{117, 117, 117}},
+	{"lightbulb.001"a,{227, 226, 150}},
+	{"Mattress.001"a,{0, 0, 0}},
+	{"Pillow.001"a,{255, 255, 255}},
+	{"Pillow.001"a,{255, 255, 255}},
+	{"Couch"a,{138, 0, 0}},
+	{"Entrance.001"a,{59, 59, 59}},
+	{"fidget"a,{0, 39, 179}},
+	{"fidget2"a,{0, 39, 179}},
+	{"fidget3"a,{0, 39, 179}},
+	{"fidget4"a,{0, 39, 179}},
+	{"Red_rope_1"a,{179, 0, 0}},
+	{"red_rope_2"a,{179, 0, 0}},
+	{"red_rope_3"a,{179, 0, 0}},
+	{"red_rope_4"a,{179, 0, 0}},
+	{"Cell_Door.001"a,{43, 43, 43}},
+	{"Cell_Door.002"a,{43, 43, 43}},
+	{"Cell_Door.003"a,{43, 43, 43}},
+	{"Cell_Door.004"a,{43, 43, 43}},
+	{"Cell_Door.005"a,{43, 43, 43}},
+	{"Cell_Door.006"a,{43, 43, 43}},
+	{"Cell_Door.007"a,{43, 43, 43}},
+	{"Desk"a,{54, 29, 8}},
+	{"Security_Office_Text"a,{204, 141, 41}},
+};
+
 
 enum TextureFormat : U32 {
 	TEXTURE_FORMAT_NULL,
@@ -48,7 +131,8 @@ Texture fontAtlas;
 Texture uiIncrementLeft;
 Texture uiIncrementRight;
 
-Texture brainTexture;
+Texture textures[ARRAY_COUNT(textureNames)];
+
 
 ArenaArrayList<Texture*> allTextures;
 ArenaArrayList<VkDeviceMemory> memoryUsed;
@@ -207,7 +291,11 @@ void load_all() {
 	load_png(&uiIncrementRight, "resources/textures/ui_increment_right.png"a);
 	load_msdf(&fontAtlas, "resources/textures/font.ddf"a);
 
-	load_png(&brainTexture, "resources/textures/Brain Texture.png"a);
+	for (U32 i = 0; i < ARRAY_COUNT(textures); i++) {
+		load_png(&textures[i], stracat(globalArena, "resources/textures/"a, textureNames[i].tex));
+	}
+
+
 }
 
 void destroy_all() {
