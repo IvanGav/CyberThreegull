@@ -719,6 +719,8 @@ struct StrA {
 		U64 last = min(U64(end), length);
 		return StrA{ str + first, U64(last - first) };
 	}
+
+
 	FINLINE StrA prefix(I64 amount) const {
 		return slice(0, amount);
 	}
