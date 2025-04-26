@@ -280,7 +280,23 @@ bool interpretCommand(StrA cmd) {
     } else if (cmd.substr(0, cmdsize) == "mkdir"a) {
         mkdir();
     } else if (cmd.substr(0, cmdsize) == "cat"a) {
-        cat();
+        int filename_from = seek(cmd, from, cmdsize);
+        StrA file = cmd.substr(filename_from, cmdsize);
+
+        if (file.is_empty()) {
+            io_print(io, "No file name specified."a);
+        } else {
+            for (DirEntry& e : *wd) {
+                if (e.name == file && !e.isDir) {
+                    for (int i = 0; i < e.file->size; i++) {
+                        io_print(io, vecToStrA(e.file->data[i]));
+                    }
+                    goto skip_cat;
+                }
+            }
+            io_print(io, "File not found."a);
+            skip_cat:;
+        }
     } else if (cmd.substr(0, cmdsize) == "exit"a) {
         return true;
     } else if (cmd.substr(0, cmdsize) == "pwd"a) {
@@ -376,24 +392,6 @@ void mkdir() {
 
 // Print out file 
 void cat() {
-	File& io = wt->io;
-	int cmdsize = 4;
-	int from = 0;
-	ArenaArrayList<char> cmd = wt->history.back();
-	StrA cmdStr = vecToStrA(cmd);
-	seek(cmdStr, from, cmdsize);
-	StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
-	if (file.is_empty()) {
-		io_print(io, "No file name specified."a);
-		return;
-	}
-	for (DirEntry& e : *wd) {
-		if (e.name == file && !e.isDir) {
-			io_print(io, fileToStrA(*e.file));
-			return;
-		}
-	}
-	io_print(io, "File not found."a);
 }
 
 void exec() {
@@ -401,24 +399,6 @@ void exec() {
 }
 
 void touch() {
-	File& io = wt->io;
-	int cmdsize = 6;
-	int from = 0;
-	ArenaArrayList<char> cmd = wt->history.back();
-	StrA cmdStr = vecToStrA(cmd);
-	seek(cmdStr, from, cmdsize);
-	StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
-	if (file.is_empty()) {
-		io_print(io, "No file name specified."a);
-		return;
-	}
-	for (DirEntry& e : *wd) {
-		if (e.name == file && !e.isDir) {
-			io_print(io, "File already exists."a);
-			return;
-		}
-	}
-	create_file(file, false);
 }
 
 int getLineLen() {
