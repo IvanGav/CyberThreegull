@@ -50,7 +50,7 @@ void main(){
 		vec2(2.627014398574829, 1.8073134422302246)
 	};
 	vec2 clip = clips[flags >> 1 & 7];
-	if(pos.x > clip.x || pos.y > clip.y){
+	if(pos.x < 0.0 || pos.y < 0.0 || pos.x > clip.x || pos.y > clip.y){
 		discard;
 	}
 	if ((flags & UI_RENDER_FLAG_MSDF) != 0) {

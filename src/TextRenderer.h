@@ -12,6 +12,13 @@ F32 string_size_x(StrA str, F32 sizeY) {
 	return characterStep * F32(str.length);
 }
 
+F32 length_size_x(U32 len, F32 sizeY) {
+	F32 characterSpacing = 1.0F;
+	F32 sizeX = sizeY * 0.5F;
+	F32 characterStep = sizeX * ((6.0F + characterSpacing) / 6.0F);
+	return characterStep * F32(len);
+}
+
 void draw_string_batched(DynamicVertexBuffer::Tessellator& tes, StrA str, F32 x, F32 y, F32 z, F32 sizeY, V4F32 color, U32 flags) {
 	// Font characters are assumed to be 12 units tall and 6 units wide
 	// I'm only going to handle monospaced right now because it's easier and I like monospaced fonts more anyway
