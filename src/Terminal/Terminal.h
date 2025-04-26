@@ -76,7 +76,15 @@ StrA fileToStrA(File& f);
 void io_print(File& f, StrA s);
 ArenaArrayList<char> strAToVec(StrA s);
 bool interpretCommand(StrA cmd);
+void print_dir();
 void print_help();
+void mkdir();
+void cat();
+bool exit();
+void pwd();
+void exec();
+void touch();
+void clear();
 int getLineLen();
 void create_file(StrA name, bool isDir);
 bool close_file();
@@ -155,7 +163,8 @@ void runVirtualTerminal() {
         }
 
         // Print the current terminal state
-        print(vecToStrA(wf->back()));
+        print("____________________________"a);
+        print(fileToStrA(*wf));
     }
 }
 
@@ -177,7 +186,7 @@ void terminalsInit() {
 void openTerminal(int terminal) {
     terminalMode = TerminalMode::Cmd;
     wt = &ts[terminal];
-    wf = &wt->history;
+    wf = &wt->io;
     curCursorX = 2;
     curCursorY = wf->size - 1;
     curOffset = -1;
@@ -211,7 +220,7 @@ bool typeChar(Win32::Key char_code, char c) {
 
 // When a terminal is clicked, call this function with coordinates of the character that has been clicked
 void clickAt(int x, int y) {
-    if (wf != &wt->history) {
+    if (terminalMode == TerminalMode::Editor) {
         curCursorY = min(U32(y), wf->size - 1);
         curCursorX = min(U32(x), wf->data[curCursorY].size);
     } else if (y == curCursorY && x > 1 && x <= getLineLen()) {
@@ -223,7 +232,7 @@ void clickAt(int x, int y) {
 // Get offset based on current height
 int getOffset(int height) {
     if (curOffset == -1) {
-        if (wf == &wt->history) {
+        if (terminalMode == TerminalMode::Cmd) {
             curOffset = curCursorY;
         } else {
             curOffset = max(curCursorY - height + 1, 0);
@@ -303,7 +312,7 @@ bool interpretCommand(StrA cmd) {
     File& io = wt->io;
     
     if (cmd.substr(from, cmdsize) == "dir"a || cmd.substr(from, cmdsize) == "l"a) {
-        
+        print_dir();
     } else if (cmd.substr(from, cmdsize) == "help"a) {
         print_help();
     } else if (cmd.substr(from, cmdsize) == "vim"a) {
@@ -328,6 +337,22 @@ bool interpretCommand(StrA cmd) {
 
     new_cmd_line();
     return false;
+}
+
+void print_dir() {
+	File& io = wt->io;
+	if (wd->size == 0) {
+		io_print(io, "No files in this directory."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.isDir) {
+			io_print(io, e.name);
+		}
+		else {
+			io_print(io, e.name);
+		}
+	}
 }
 
 void print_help() {
@@ -363,6 +388,99 @@ void print_help() {
     io_print(io, "  Exit"a);
 }
 
+void mkdir() {
+	File& io = wt->io;
+    int cmdsize = 5;
+	int from = 0;
+	ArenaArrayList<char> cmd = wt->history.back();
+	StrA cmdStr = vecToStrA(cmd);
+	seek(cmdStr, from, cmdsize);
+	StrA dir = vecToStrA(wt->history.back()).substr(cmdsize,cmdStr.length - 1);
+
+	if (dir.is_empty()) {
+		io_print(io, "No directory name specified."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.name == dir && e.isDir) {
+			io_print(io, "Directory already exists."a);
+			return;
+		}
+	}
+	create_file(dir, true);
+}
+
+
+// Print out file 
+void cat() {
+	File& io = wt->io;
+	int cmdsize = 4;
+	int from = 0;
+	ArenaArrayList<char> cmd = wt->history.back();
+	StrA cmdStr = vecToStrA(cmd);
+	seek(cmdStr, from, cmdsize);
+	StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.name == file && !e.isDir) {
+			io_print(io, fileToStrA(*e.file));
+			return;
+		}
+	}
+	io_print(io, "File not found."a);
+}
+
+bool exit() {
+    return true;
+}
+
+void pwd() {
+	File& io = wt->io;
+	StrA path = ""a;
+	for (int i = 0; i < wd->size; i++) {
+		path = add_two_stra(path, wd->data[i].name);
+		if (i != wd->size - 1) {
+            path = add_two_stra(path, "/"a);
+		}
+	}
+	io_print(io, path);
+
+}
+
+void exec() {
+
+}
+
+void touch() {
+	File& io = wt->io;
+	int cmdsize = 6;
+	int from = 0;
+	ArenaArrayList<char> cmd = wt->history.back();
+	StrA cmdStr = vecToStrA(cmd);
+	seek(cmdStr, from, cmdsize);
+	StrA file = vecToStrA(wt->history.back()).substr(cmdsize, cmdStr.length - 1);
+	if (file.is_empty()) {
+		io_print(io, "No file name specified."a);
+		return;
+	}
+	for (DirEntry& e : *wd) {
+		if (e.name == file && !e.isDir) {
+			io_print(io, "File already exists."a);
+			return;
+		}
+	}
+	create_file(file, false);
+}
+
+void clear() {
+	File& io = wt->io;
+	io.clear();
+	io.push_back(strAToVec(PROMPT));
+}
+
 int getLineLen() {
     return wf->data[curCursorY].size;
 }
@@ -384,10 +502,10 @@ void create_file(StrA name, bool isDir) {
 
 // Return true if successful
 bool close_file() {
-    if (wf == &wt->history) {
+    if (terminalMode == TerminalMode::Cmd) {
         return false;
     }
-    wf = &wt->history;
+    wf = &wt->io;
     curCursorX = 2;
     curCursorY = wf->size - 1;
     curOffset = -1;
@@ -458,25 +576,21 @@ void make_rightmost() {
 
 //when in a terminal, set the latest line to be the correct selected (`editingHistory`) command
 void set_cur_terminal_line() {
-    wt->history.back().clear();
+    wt->io.back().clear();
     ArenaArrayList data = wt->history.data[editingHistory];
-    wt->history.back().push_back_n(data.data, data.size);
+    wt->io.back().push_back_n(PROMPT.str, PROMPT.length);
+    wt->io.back().push_back_n(data.data, data.size);
+
+    curCursorY = wt->io.size - 1;
+    editingHistory = wt->history.size - 1;
+    make_rightmost();
 }
 
 // assuming that `wt` is history, put a blank cmd line
 void new_cmd_line() {
     wt->history.push_back(ArenaArrayList<char>{});
-    wt->history.back().push_back(' ', '>');
-    //if the last history line is empty, don't make a new empty line
-    /*if (wt->history.empty() || wt->history.back().size > 2) {
-        
-    } else {
-        wt->history.back().clear();
-    }*/
-
-    curCursorY = wt->history.size - 1;
-    editingHistory = wt->history.size - 1;
-    make_rightmost();
+    wt->io.push_back(ArenaArrayList<char>{});
+    set_cur_terminal_line();
 }
 
 /*
@@ -499,7 +613,7 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
     } else if (charCode == Win32::KEY_DELETE) {
         delete_key();
     } else if (charCode == Win32::KEY_TAB) {
-        //tab_key();
+        tab_key();
     } else if (charCode == Win32::KEY_RETURN) {
         return enter_key();
     } else if (charCode == Win32::KEY_ESC) {
@@ -734,8 +848,7 @@ void delete_key() {
         //terminal
         if (rightmost()) return;
         wf->data[curCursorY].erase(curCursorX);
-    }
-    else {
+    } else {
         //editor
         if (!rightmost()) {
             wf->data[curCursorY].erase(curCursorX);
@@ -750,7 +863,8 @@ void delete_key() {
 
 bool enter_key() {
     if (terminalMode == TerminalMode::Cmd) {
-        return interpretCommand(StrA{ wf->back().data, wf->back().size });
+        wt->history.back().copy_from_skip_n(wf->back(), PROMPT_LEN);
+        return interpretCommand(vecToStrA(wt->history.back()));
     } else {
         if (rightmost()) {
             //newline
