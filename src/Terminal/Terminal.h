@@ -387,12 +387,12 @@ ArenaArrayList<StrA> find_files(StrA match) {
 
 
 
-TabInfo findInputToTab() {
+TabInfo find_input_to_tab() {
 	// Find the last space in the line
 	StrA fullLine = vecToStrA(wf->back()); // get the full line
     StrA currentLine = (fullLine++)++; // removes the prompt
 	int indexNextSpace = currentLine.find(" "a); // get index of last space, -1 if none
-	int indexNextSpace = (indexNextSpace == -1) ? 0 : indexNextSpace; // if no space, set to 0
+	indexNextSpace = (indexNextSpace == -1) ? 0 : indexNextSpace; // if no space, set to 0
 	StrA inputToTab = currentLine.slice(indexNextSpace, currentLine.length);
 
     // Find the next space of current inputToTab to make segment wante 
@@ -433,7 +433,7 @@ void tab_key() {
     ArenaArrayList<char>* updatedLine = &wf->back();
 
 	// Finding the section of the line that needs to be autocompleted(tabbed)
-	TabInfo tabInfo = findInputToTab();
+	TabInfo tabInfo = find_input_to_tab();
 	StrA inputToTab = tabInfo.portion; // get the input to tab
 	int inputToTabSize = inputToTab.length; // size of the input to tab
     StrA tabbedInput = ""a;
