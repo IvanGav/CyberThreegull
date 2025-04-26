@@ -53,22 +53,54 @@ void openTerminal(int terminal);
 File& getTerminal();
 int cursorX();
 int cursorY();
-int getOffset(int height);
 bool typeChar(Win32::Key char_code, char c);
+void clickAt(int x, int y);
 void scrollInput(F32 scroll);
+int getOffset(int height);
 
 // These functions are internal
 int seek(StrA str, int& from, int& len);
-StrA vecToStrA(ArenaArrayList<char> list);
+StrA vecToStrA(ArenaArrayList<char>& list);
+StrA fileToStrA(File& f);
 bool interpretCommand(StrA cmd);
 int getLineLen();
 void createFile(StrA name, bool isDir);
+bool closeFile();
+bool openFile(StrA file);
+bool changeDir(StrA dir);
+Dir* getDir(StrA path);
 bool rightmost();
+void makeRightmost();
 void setCurTerminalLine();
+void newCmdLine();
+bool interpret_typed_character(Win32::Key charCode, char c);
+//void tab_key();
+void up_arrow();
+void down_arrow();
+void left_arrow();
+void right_arrow();
+void insert_char(char c);
+void backspace_key();
+void delete_key();
+bool enter_key();
 
 /*
     API
 */
+
+// Call before using terminals
+void terminalsInit() {
+    //    MemoryArena& arena = get_scratch_arena();
+    //    MEMORY_ARENA_FRAME(arena) {
+    //        ArenaArrayList<char> arr {};
+
+    //    }
+    //    strafmt(arena, "THere are % number of ducks"a, 5);
+    for (int i = 0; i < 6; i++) {
+        ts[i].history = {};
+        ts[i].root = {};
+    }
+}
 
 // Open a terminal number 'terminal'
 void openTerminal(int terminal) {
@@ -134,16 +166,6 @@ int getOffset(int height) {
     return curOffset;
 }
 
-// Call before using terminals
-void terminalsInit() {
-//    MemoryArena& arena = get_scratch_arena();
-//    MEMORY_ARENA_FRAME(arena) {
-//        ArenaArrayList<char> arr {};
-
-//    }
-//    strafmt(arena, "THere are % number of ducks"a, 5);
-}
-
 void scrollInput(F32 scroll) {
     //assume -120 to 120
     curOffset = clamp(curOffset - signumf32(scroll), 0, curCursorY);
@@ -166,9 +188,18 @@ int seek(StrA str, int& from, int& len) {
 }
 
 // Return a StrA slice of `list`
-StrA vecToStrA(ArenaArrayList<char> list) {
+StrA vecToStrA(ArenaArrayList<char>& list) {
     ArenaArrayList<char> b = list;
     return { b.data, b.size };
+}
+
+// Return a StrA slice of `list`
+StrA fileToStrA(File& f) {
+    ArenaArrayList<char> buf{};
+    for (int i = 0; i < f.size; i++) {
+        buf.push_back_n(f.data[i].data, f.data[i].size);
+    }
+    return vecToStrA(buf);
 }
 
 /*
@@ -197,7 +228,7 @@ void createFile(StrA name, bool isDir) {
         wd->push_back(e);
     } else {
         File* f = globalArena.zalloc<File>(1);
-        f->push_back("");
+        f->push_back(ArenaArrayList<char>{});
         DirEntry e = DirEntry { false, name };
         e.file = f;
         wd->push_back(e);
@@ -278,7 +309,7 @@ void makeRightmost() {
     curCursorX = getLineLen();
 }
 
-//when in a terminal, set the latest line to be the correct selected (history) command
+//when in a terminal, set the latest line to be the correct selected (`editingHistory`) command
 void setCurTerminalLine() {
     wt->history.back().clear();
     ArenaArrayList data = wt->history.data[editingHistory];
@@ -288,7 +319,7 @@ void setCurTerminalLine() {
 // assuming that `wt` is history, put a blank cmd line
 void newCmdLine() {
     //if the last history line is empty, don't make a new empty line
-    if (wt->history.back().size > 2) {
+    if (wt->history.empty() || wt->history.back().size > 2) {
         wt->history.push_back(ArenaArrayList<char>{});
     }
     wt->history.back().push_back(' ', '>');
@@ -318,7 +349,7 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
     } else if (charCode == Win32::KEY_DELETE) {
         delete_key();
     } else if (charCode == Win32::KEY_TAB) {
-        tab_key();
+        //tab_key();
     } else if (charCode == Win32::KEY_RETURN) {
         return enter_key();
     } else if (charCode == Win32::KEY_ESC) {
@@ -333,7 +364,7 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
     return false;
 }
 
-void tab_key() {
+/*void tab_key() {
 	if (terminalMode == TerminalMode::Editor) {
 		return;
 	}
@@ -391,6 +422,7 @@ void tab_key() {
     makeRightmost();
 
 }
+*/
 
 void up_arrow() {
     if (terminalMode == TerminalMode::Cmd) {
@@ -398,9 +430,8 @@ void up_arrow() {
         if (editingHistory == 0) return;
         editingHistory--;
         setCurTerminalLine();
-        curCursorX = get_line_len();
-    }
-    else {
+        makeRightmost();
+    } else {
         //in editor
         if (curCursorY == 0) {
             savedCursorX = max(curCursorX, savedCursorX);
@@ -409,38 +440,37 @@ void up_arrow() {
         }
         curCursorY--;
         curCursorX = max(curCursorX, savedCursorX);
-        if (get_line_len() < curCursorX) {
+        if (getLineLen() < curCursorX) {
             //bad, save
             savedCursorX = max(curCursorX, savedCursorX);
-            curCursorX = get_line_len();
+            makeRightmost();
         }
     }
 }
 
 void down_arrow() {
-    if (curFile == 0) {
+    if (terminalMode == TerminalMode::Cmd) {
         //in terminal
-        if (editingHistory == ts[curTerminal].history.size() - 1) return;
+        if (editingHistory == wt->history.size - 1) return;
         editingHistory++;
         setCurTerminalLine();
-        curCursorX = get_line_len();
-    }
-    else {
+        makeRightmost();
+    } else {
         //in editor
-        if (curCursorY == get_cur_file().size() - 1) { curCursorX = get_line_len(); return; }
+        if (curCursorY == wf->size - 1) { makeRightmost(); return; }
         curCursorY++;
         curCursorX = max(curCursorX, savedCursorX);
-        if (get_line_len() < curCursorX) {
+        if (getLineLen() < curCursorX) {
             //bad, save
             savedCursorX = max(curCursorX, savedCursorX);
-            curCursorX = get_line_len();
+            makeRightmost();
         }
     }
 }
 
 //
 void left_arrow() {
-    if (curCursorX > (curFile == 0 ? 2 : 0)) { //because you don't want to be able to edit "> " in the terminal
+    if (curCursorX > (terminalMode == TerminalMode::Cmd ? 2 : 0)) { //because you don't want to be able to edit " >" in the terminal
         curCursorX--;
     }
     savedCursorX = 0;
@@ -448,102 +478,78 @@ void left_arrow() {
 
 //go right until to the right of the rightmost character; reset savedCursorX
 void right_arrow() {
-    if (curCursorX < get_line_len()) {
+    if (curCursorX < getLineLen()) {
         curCursorX++;
     }
     savedCursorX = 0;
 }
 
 void insert_char(char c) {
-    if (curFile == 0) {
-        //terminal
-        if (rightmost()) {
-            ts[curTerminal].history[editingHistory].push_back(c);
-        }
-        else {
-            ts[curTerminal].history[editingHistory].insert(curCursorX - 2, 1, c);
-        }
-        setCurTerminalLine();
+    if (rightmost()) {
+        wf->data[curCursorY].push_back(c);
     }
     else {
-        //editor
-        if (rightmost()) {
-            get_cur_file()[curCursorY].push_back(c);
-        }
-        else {
-            get_cur_file()[curCursorY].insert(curCursorX, 1, c);
-        }
+        wf->data[curCursorY].insert(c, curCursorX);
     }
     right_arrow();
 }
 
 void backspace_key() {
-    if (curFile == 0) {
+    if (terminalMode == TerminalMode::Cmd) {
         //terminal
-        file& f = get_cur_file();
         if (curCursorX > 2) {
-            ts[curTerminal].history[editingHistory].erase(curCursorX - 3, 1);
+            wf->data[curCursorY].erase(curCursorX - 1);
             left_arrow();
         }
-        setCurTerminalLine();
-    }
-    else {
+    } else {
         //editor
-        file& f = get_cur_file();
         if (curCursorX != 0) {
-            f[curCursorY].erase(curCursorX - 1, 1);
+            wf->data[curCursorY].erase(curCursorX - 1);
             left_arrow();
-        }
-        else {
+        } else {
             if (curCursorY == 0) return;
             curCursorY--;
-            curCursorX = get_line_len();
-            f[curCursorY].append(f[curCursorY + 1]);
-            f.erase(f.begin() + curCursorY + 1);
+            makeRightmost();
+            ArenaArrayList<char>& r = wf->data[curCursorY + 1];
+            wf->data[curCursorY].push_back_n(r.data, r.size);
+            wf->erase(curCursorY + 1);
         }
     }
 }
 
 void delete_key() {
-    if (curFile == 0) {
+    if (terminalMode == TerminalMode::Cmd) {
         //terminal
-        file& f = get_cur_file();
         if (rightmost()) return;
-        ts[curTerminal].history[editingHistory].erase(curCursorX - 2, 1);
-        setCurTerminalLine();
+        wf->data[curCursorY].erase(curCursorX);
     }
     else {
         //editor
-        file& f = get_cur_file();
         if (!rightmost()) {
-            f[curCursorY].erase(curCursorX, 1);
-        }
-        else {
-            if (curCursorY == get_cur_file().size() - 1) return;
-            f[curCursorY].append(f[curCursorY + 1]);
-            f.erase(f.begin() + curCursorY + 1);
+            wf->data[curCursorY].erase(curCursorX);
+        } else {
+            if (curCursorY == wf->size - 1) return;
+            ArenaArrayList<char>& r = wf->data[curCursorY + 1];
+            wf->data[curCursorY].push_back_n(r.data, r.size);
+            wf->erase(curCursorY + 1);
         }
     }
 }
 
 bool enter_key() {
-    if (curFile == 0) {
-        //copy current history item to latest history line
-        int last = ts[curTerminal].history.size() - 1;
-        ts[curTerminal].history[last] = ts[curTerminal].history[editingHistory];
-        editingHistory = last;
-        return interpret_command(ts[curTerminal].history[last]);
-    }
-    else {
-        file& f = get_cur_file();
+    if (terminalMode == TerminalMode::Cmd) {
+        bool ret = interpretCommand(StrA{ wf->back().data, wf->back().size });
+        newCmdLine();
+        return ret;
+    } else {
         if (rightmost()) {
             //newline
-            f.insert(f.begin() + curCursorY + 1, "");
-        }
-        else {
+            wf->insert(ArenaArrayList<char>{}, curCursorY + 1);
+        } else {
             //split
-            f.insert(f.begin() + curCursorY + 1, (*(f.begin() + curCursorY)).substr(curCursorX));
-            f[curCursorY].erase(curCursorX);
+            ArenaArrayList<char>& curLine = wf->data[curCursorY];
+            wf->insert(curLine.subarray(curCursorX, curLine.size-curCursorX), curCursorY + 1);
+            curLine = curLine.subarray(0, curCursorX);
         }
         down_arrow();
         curCursorX = 0;

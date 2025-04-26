@@ -80,7 +80,7 @@
     <ClInclude Include="src\Win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Terminal.h">
+    <ClInclude Include="src\Terminal\Terminal.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

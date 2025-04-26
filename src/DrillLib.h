@@ -404,6 +404,30 @@ struct ArenaArrayList {
 		return false;
 	}
 
+	template<typename Val>
+	void insert(Val value, U32 index) {
+		if (size == capacity) {
+			reserve(max<U32>(capacity * 2, 8));
+		}
+		for (U32 i = size; i > index; i--) {
+			data[i] = data[i - 1];
+		}
+		data[index] = T(value);
+	}
+
+	T erase(U32 index) {
+		T temp = data[index];
+		for (U32 i = index; i < size-1; i++) {
+			data[i] = data[i + 1];
+		}
+		return temp;
+	}
+
+	ArenaArrayList<T> subarray(U32 start, U32 len) {
+		ArenaArrayList newArr{allocator};
+		newArr.push_back_n(data + start, len);
+	}
+
 	FINLINE T& last() {
 		return data[size - 1];
 	}
