@@ -8,6 +8,20 @@
 
 namespace Textures {
 
+struct NameTex {
+	StrA name;
+	StrA tex;
+};
+
+NameTex textureNames[]{
+	{ "Spehre.001"a, "Brain Texture"a },
+	{ "Spehre.001"a, "Brain Texture"a },
+	{ "Spehre.001"a, "Brain Texture"a },
+	{ "Spehre.001"a, "Brain Texture"a },
+	{ "Spehre.001"a, "Brain Texture"a },
+	{ "Spehre.001"a, "Brain Texture"a },
+};
+
 enum TextureFormat : U32 {
 	TEXTURE_FORMAT_NULL,
 	TEXTURE_FORMAT_RGBA_U8,
@@ -33,6 +47,8 @@ Texture simpleWhite;
 Texture fontAtlas;
 Texture uiIncrementLeft;
 Texture uiIncrementRight;
+
+Texture brainTexture;
 
 ArenaArrayList<Texture*> allTextures;
 ArenaArrayList<VkDeviceMemory> memoryUsed;
@@ -190,6 +206,8 @@ void load_all() {
 	load_png(&uiIncrementLeft, "resources/textures/ui_increment_left.png"a);
 	load_png(&uiIncrementRight, "resources/textures/ui_increment_right.png"a);
 	load_msdf(&fontAtlas, "resources/textures/font.ddf"a);
+
+	load_png(&brainTexture, "resources/textures/Brain Texture.png"a);
 }
 
 void destroy_all() {

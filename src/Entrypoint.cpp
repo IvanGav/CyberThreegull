@@ -8,7 +8,8 @@ void mainCRTStartup() {
         ExitProcess(EXIT_FAILURE);
     }
 
-    runVirtualTerminal(); // Run the virtual terminal
+    //runVirtualTerminal(); // Run the virtual terminal
+    CyberThreegull::run_cyber_threequell();
 
     ExitProcess(EXIT_SUCCESS);
 }

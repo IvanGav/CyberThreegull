@@ -1109,6 +1109,20 @@ struct PerspectiveProjection {
 		nearPlane = nearZ;
 	}
 
+	FINLINE void project_perspective(F32 nearZ, F32 fovX, F32 yToXRatio) {
+		F32 sinRight;
+		F32 cosRight = sincosf32(&sinRight, fovX * 0.5);
+		F32 rightX = sinRight / cosRight;
+		F32 leftX = -rightX;
+		F32 upY = rightX * yToXRatio;
+		F32 downY = -upY;
+		xScale = 1.0F / ((rightX - leftX) * 0.5F);
+		xZBias = (rightX + leftX) / (rightX - leftX);
+		yScale = 1.0F / ((upY - downY) * 0.5F);
+		yZBias = (upY + downY) / (upY - downY);
+		nearPlane = nearZ;
+	}
+
 	FINLINE V3F32 transform(V3F32 vec) {
 		F32 x = vec.x * xScale + vec.z * xZBias;
 		F32 y = vec.y * yScale + vec.z * yZBias;
@@ -1367,6 +1381,16 @@ FINLINE F32 ray_intersect_circle(V2F32 circleCenter, F32 radius, V2F32 rayOrigin
 	} else {
 		return t2 < 0.0F ? t1 : min(t1, t2);
 	}
+}
+
+F32 ray_intersect_plane(V3F32 planePoint, V3F32 planeNorm, V3F32 rayOrigin, V3F32 rayDir) {
+	return -dot(rayOrigin - planePoint, planeNorm) / dot(rayDir, planeNorm);
+}
+
+V2F32 ray_intersect_rect(V3F32 rectOrigin, V3F32 rectXAxis, V3F32 rectYAxis,  V3F32 rayOrigin, V3F32 rayDir) {
+	F32 intersected = ray_intersect_plane(rectOrigin, cross(rectXAxis, rectYAxis), rayOrigin, rayDir);
+	V3F32 planePoint = rayOrigin + rayDir * intersected;
+	return V2F32{ dot(planePoint, rectXAxis) / length_sq(rectXAxis), dot(planePoint, rectYAxis) / length_sq(rectYAxis) };
 }
 
 DEBUG_OPTIMIZE_OFF

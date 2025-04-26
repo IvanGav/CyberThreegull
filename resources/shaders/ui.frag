@@ -44,7 +44,7 @@ void main(){
 	if ((flags & UI_RENDER_FLAG_MSDF) != 0) {
 		vec2 texdx = dFdx(texcoord);
 		vec2 texdy = dFdy(texcoord);
-		float screenPxRange = screen_px_range(texdx + texdy);
+		float screenPxRange = screen_px_range(abs(texdx) + abs(texdy));
 		vec4 val = sample_color(screenPxRange, texcoord) * color;
 		if(val.a == 0){
 			discard;

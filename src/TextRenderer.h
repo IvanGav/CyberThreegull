@@ -64,7 +64,9 @@ void draw_string_batched(DynamicVertexBuffer::Tessellator& tes, StrA str, F32 x,
 
 void draw_string(StrA str, F32 x, F32 y, F32 z, F32 sizeY, V4F32 color, U32 flags) {
 	DynamicVertexBuffer::Tessellator& tes = DynamicVertexBuffer::get_tessellator();
-	tes.begin_draw(VK::uiPipeline, VK::uiPipelineLayout, DynamicVertexBuffer::DRAW_MODE_QUADS);
+	M4x3F32 t;
+	t.set_identity();
+	tes.begin_draw(VK::uiPipeline, VK::uiPipelineLayout, DynamicVertexBuffer::DRAW_MODE_QUADS, t);
 	draw_string_batched(tes, str, x, y, z, sizeY, color, flags);
 	tes.end_draw();
 }

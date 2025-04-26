@@ -163,7 +163,8 @@ void runVirtualTerminal() {
         }
 
         // Print the current terminal state
-        print(vecToStrA(wf->back()));
+        print("____________________________"a);
+        print(fileToStrA(*wf));
     }
 }
 
@@ -185,7 +186,7 @@ void terminalsInit() {
 void openTerminal(int terminal) {
     terminalMode = TerminalMode::Cmd;
     wt = &ts[terminal];
-    wf = &wt->history;
+    wf = &wt->io;
     curCursorX = 2;
     curCursorY = wf->size - 1;
     curOffset = -1;
@@ -219,7 +220,7 @@ bool typeChar(Win32::Key char_code, char c) {
 
 // When a terminal is clicked, call this function with coordinates of the character that has been clicked
 void clickAt(int x, int y) {
-    if (wf != &wt->history) {
+    if (terminalMode == TerminalMode::Editor) {
         curCursorY = min(U32(y), wf->size - 1);
         curCursorX = min(U32(x), wf->data[curCursorY].size);
     } else if (y == curCursorY && x > 1 && x <= getLineLen()) {
@@ -231,7 +232,7 @@ void clickAt(int x, int y) {
 // Get offset based on current height
 int getOffset(int height) {
     if (curOffset == -1) {
-        if (wf == &wt->history) {
+        if (terminalMode == TerminalMode::Cmd) {
             curOffset = curCursorY;
         } else {
             curOffset = max(curCursorY - height + 1, 0);
@@ -501,10 +502,10 @@ void create_file(StrA name, bool isDir) {
 
 // Return true if successful
 bool close_file() {
-    if (wf == &wt->history) {
+    if (terminalMode == TerminalMode::Cmd) {
         return false;
     }
-    wf = &wt->history;
+    wf = &wt->io;
     curCursorX = 2;
     curCursorY = wf->size - 1;
     curOffset = -1;
@@ -575,25 +576,21 @@ void make_rightmost() {
 
 //when in a terminal, set the latest line to be the correct selected (`editingHistory`) command
 void set_cur_terminal_line() {
-    wt->history.back().clear();
+    wt->io.back().clear();
     ArenaArrayList data = wt->history.data[editingHistory];
-    wt->history.back().push_back_n(data.data, data.size);
+    wt->io.back().push_back_n(PROMPT.str, PROMPT.length);
+    wt->io.back().push_back_n(data.data, data.size);
+
+    curCursorY = wt->io.size - 1;
+    editingHistory = wt->history.size - 1;
+    make_rightmost();
 }
 
 // assuming that `wt` is history, put a blank cmd line
 void new_cmd_line() {
     wt->history.push_back(ArenaArrayList<char>{});
-    wt->history.back().push_back(' ', '>');
-    //if the last history line is empty, don't make a new empty line
-    /*if (wt->history.empty() || wt->history.back().size > 2) {
-        
-    } else {
-        wt->history.back().clear();
-    }*/
-
-    curCursorY = wt->history.size - 1;
-    editingHistory = wt->history.size - 1;
-    make_rightmost();
+    wt->io.push_back(ArenaArrayList<char>{});
+    set_cur_terminal_line();
 }
 
 /*
@@ -616,7 +613,7 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
     } else if (charCode == Win32::KEY_DELETE) {
         delete_key();
     } else if (charCode == Win32::KEY_TAB) {
-        //tab_key();
+        tab_key();
     } else if (charCode == Win32::KEY_RETURN) {
         return enter_key();
     } else if (charCode == Win32::KEY_ESC) {
@@ -851,8 +848,7 @@ void delete_key() {
         //terminal
         if (rightmost()) return;
         wf->data[curCursorY].erase(curCursorX);
-    }
-    else {
+    } else {
         //editor
         if (!rightmost()) {
             wf->data[curCursorY].erase(curCursorX);
@@ -867,7 +863,8 @@ void delete_key() {
 
 bool enter_key() {
     if (terminalMode == TerminalMode::Cmd) {
-        return interpretCommand(StrA{ wf->back().data, wf->back().size });
+        wt->history.back().copy_from_skip_n(wf->back(), PROMPT_LEN);
+        return interpretCommand(vecToStrA(wt->history.back()));
     } else {
         if (rightmost()) {
             //newline

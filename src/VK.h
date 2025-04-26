@@ -1,6 +1,7 @@
 #pragma once
 #include "VK_decl.h"
 #include "VKStaging.h"
+#include "VKGeometry.h"
 #include "Win32.h"
 #include "Textures_decl.h"
 #include "DynamicVertexBuffer_decl.h"
@@ -64,6 +65,8 @@ VkQueue computeQueue;
 U32 currentFrameInFlight;
 
 VKStaging::GPUUploadStager graphicsStager;
+VKGeometry::GeometryHandler geometryHandler;
+VKGeometry::UniformMatricesHandler uniformMatricesHandler;
 
 Framebuffer mainFramebuffer;
 
@@ -786,6 +789,8 @@ allNecessaryQueuesPresent:;
 	}
 
 	graphicsStager.init(graphicsQueue, graphicsFamily);
+	geometryHandler.init(1 * GIGABYTE);
+	uniformMatricesHandler.init(2 * MEGABYTE);
 
 	for (U32 i = 0; i < FRAMES_IN_FLIGHT; i++) {
 		VkSemaphoreCreateInfo semaphoreInfo{ VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
@@ -1410,7 +1415,7 @@ struct GraphicsPipelineBuilder {
 		rasterizationStateInfo.depthClampEnable = VK_FALSE;
 		rasterizationStateInfo.rasterizerDiscardEnable = VK_FALSE;
 		rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+		rasterizationStateInfo.cullMode = VK_CULL_MODE_NONE;
 		rasterizationStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		rasterizationStateInfo.depthBiasEnable = VK_FALSE;
 		rasterizationStateInfo.depthBiasConstantFactor = 0.0F;
@@ -1591,6 +1596,8 @@ struct UIPipelineRenderData {
 	V2F32 screenDimensions;
 	U64 vertexBufferPointer;
 	U64 clipBoxesPointer;
+	M4x3F32 model;
+	ProjectiveTransformMatrix viewProj;
 };
 struct UIVertex {
 	V3F32 pos;
@@ -1600,14 +1607,13 @@ struct UIVertex {
 	U32 flags;
 };
 struct BasicPipelineRenderData {
-	V2F32 screenDimensions;
-	U64 vertexBufferPointer;
-};
-struct BasicVertex {
-	V3F32 pos;
-	V2F32 tex;
-	U32 color;
+	U64 positionBufferPointer;
+	U64 texcoordBufferPointer;
+	U64 normalsBufferPointer;
+	ProjectiveTransformMatrix viewProj;
+	M4x3F32 model;
 	U32 texIdx;
+	U32 packedColor;
 };
 #pragma pack(pop)
 
@@ -1706,6 +1712,9 @@ FrameBeginResult begin_frame() {
 	cmdBufInfo.flags = 0;
 	cmdBufInfo.pInheritanceInfo = nullptr;
 	CHK_VK(vkBeginCommandBuffer(graphicsCommandBuffer, &cmdBufInfo));
+
+	geometryHandler.reset_skinned_results();
+	uniformMatricesHandler.reset();
 	return FRAME_BEGIN_RESULT_CONTINUE;
 }
 
@@ -1797,7 +1806,10 @@ void end_frame() {
 }
 
 void end_vulkan() {
+	vkDeviceWaitIdle(logicalDevice);
 	Textures::destroy_all();
+	uniformMatricesHandler.destroy();
+	geometryHandler.destroy();
 	DynamicVertexBuffer::destroy();
 	desktopSwapchainData.destroy();
 	graphicsStager.destroy();
