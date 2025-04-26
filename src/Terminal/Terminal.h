@@ -318,7 +318,7 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
     } else if (charCode == Win32::KEY_DELETE) {
         delete_key();
     } else if (charCode == Win32::KEY_TAB) {
-        tab();
+        tab_key();
     } else if (charCode == Win32::KEY_RETURN) {
         return enter_key();
     } else if (charCode == Win32::KEY_ESC) {
@@ -333,7 +333,7 @@ bool interpret_typed_character(Win32::Key charCode, char c) {
     return false;
 }
 
-void tab() {
+void tab_key() {
 	if (terminalMode == TerminalMode::Editor) {
 		return;
 	}
