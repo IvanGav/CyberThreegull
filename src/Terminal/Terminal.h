@@ -116,7 +116,6 @@ bool enter_key();
 
 // Call before using terminals
 void terminalsInit() {
-    init_asm();
     for (int i = 0; i < 6; i++) {
         ts[i].history = {};
         ts[i].root = {};
@@ -180,7 +179,36 @@ void terminalsInit() {
 	ts[5].root.push_back(DirEntry{ false, "anxiety facts"a });
     ts[5].root.back().file = anxietyFactsFile;
 
+    File* mysteryfile = globalArena.zalloc<File>(1);
+    io_print(*mysteryfile, "move r1, 10"a);
+    io_print(*mysteryfile, "out r1"a);
+    io_print(*mysteryfile, "move r2, 11"a);
+    io_print(*mysteryfile, "add r1, r2, r3"a);
+    io_print(*mysteryfile, "shl r3, 2, r3"a);
+    io_print(*mysteryfile, "jump test2"a);
+    io_print(*mysteryfile, "test:"a);
+    io_print(*mysteryfile, "cmp r3, r1, r2"a);
+    io_print(*mysteryfile, "jump test3"a);
+    io_print(*mysteryfile, "test2:"a);
+    io_print(*mysteryfile, "jumpeq r3, 21, test"a);
+    io_print(*mysteryfile, "test3:"a);
+    io_print(*mysteryfile, "out r3"a);
+    ts[1].root.push_back(DirEntry{ false, "mystery"a });
+    ts[1].root.back().file = mysteryfile;
 
+    /*StrA prog = "move r1, 10\n"
+        "move r2, 11\n"
+        "add  r1, r2, r3\n"
+        "shl  r3, 2,  r3\n"
+        "jump test2\n"
+        "test:\n"
+        "cmp r3, r1, r2\n"
+        "jump test3\n"
+        "test2:\n"
+        "jumpeq r3, 21, test\n"
+        "test3:\n"
+        "out r3"a;
+    */
 
 }
     
@@ -507,17 +535,31 @@ File* getFile(StrA name) {
 }
 
 void exec(StrA source_filename, StrA out_filename, StrA error_filename) {
-    //TODO: check for bad filenames
-    StrA prog{};
-    File& source = *getFile(source_filename);
-    File& out = *getFile(out_filename);
-    File& error = *getFile(error_filename);
+    
 
-    //for (int i = 0; i < source.size; i++) {
-    //    strafmt()
-    //}
+    MemoryArena& arena = get_scratch_arena();
+    MEMORY_ARENA_FRAME(arena) {
 
-    //run_program(StrA prog, [](U32 n) { io_print(out, strafmt(globalArena, "%", n)); }, [](StrA str) { io_print(str); });
+
+        StrA prog{};
+        File* source = getFile(source_filename);
+        File* out = getFile(out_filename);
+        File* error = getFile(error_filename);
+
+        exec_state estate{};
+        estate.error_file = error;
+        estate.out_file = out;
+        estate.memory_arena = &arena;
+
+        ArenaArrayList<StrA> lines{};
+
+        for (int i = 0; i < source->size; i++) {
+            lines.push_back(vecToStrA((*source)[i]));
+        }
+
+        run_program(&estate, lines.data, lines.size);
+
+    }   
 }
 
 int getLineLen() {

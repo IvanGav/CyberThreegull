@@ -9,7 +9,6 @@ struct instruction {
 	U8(*error_check_func)(StrA);
 };
 
-MemoryArena asm_mem;
 
 instruction insts[] = {
 	{"add"a, add_inst, add_error_check},
@@ -40,16 +39,12 @@ void output(U32 val) {
 
 
 void parse_line(StrA);
-B8 init_file_for_interpretation(exec_state*, StrA);
+B8 init_file_for_interpretation(exec_state*, StrA*, U64);
 B8 interpret(exec_state*, U64);
 U8 check_errors(StrA*, U64);
 
-//main went here
-void init_asm() {
-	asm_mem.init(1024 * 8);
-}
 
-void run_program(StrA prog, void(*output)(U32), void(*error)(StrA)) {
+void run_program(exec_state* state, StrA* prog, U64 num_lines) {
 	/*StrA prog = "move r1, 10\n"
 		"move r2, 11\n"
 		"add  r1, r2, r3\n"
@@ -64,32 +59,26 @@ void run_program(StrA prog, void(*output)(U32), void(*error)(StrA)) {
 		"out r3"a;
 	*/
 
-	exec_state state;
 	for (int i = 0; i < 18; i++) {
-		state.registers[i] = 0;
+		state->registers[i] = 0;
 	}
-	//state.output_callback = output;
-	//state.error_callback = [](StrA str) { printf(str); };
-	state.memory_arena = &asm_mem;
 
-	if (init_file_for_interpretation(&state, prog)) {
-		while (interpret(&state, 10000)) {
-			error("Ran for too long"a);
+	if (init_file_for_interpretation(state, prog, num_lines)) {
+		while (interpret(state, 10000)) {
+			ASM_THROW_ERROR("Ran for too long"a);
 			return;
 		}
 	}
 }
 
 // Return 1 if no errors were found
-B8 init_file_for_interpretation(exec_state* state, StrA file_contents) {
-	U64 num_lines;
+B8 init_file_for_interpretation(exec_state* state, StrA* file_contents, U64 num_lines) {
 	current_state = state;
-	StrA* lines = file_contents.split(*state->memory_arena, &num_lines, "\n"a);
 
-	state->lines = lines;
+	state->lines = file_contents;
 	state->num_lines = num_lines;
-	parse_labels(state->memory_arena, lines, num_lines);
-	B8 error_free = check_errors(lines, num_lines);
+	parse_labels(state->memory_arena, file_contents, num_lines);
+	B8 error_free = check_errors(file_contents, num_lines);
 	current_state = NULL;
 	return error_free;
 }

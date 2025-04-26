@@ -3,6 +3,8 @@
 #include "DrillLib.h"
 
 #define PC_REGISTER 16
+typedef ArenaArrayList<ArenaArrayList<char>> File;
+void io_print(File&, StrA);
 
 struct asm_label {
 	StrA label;
@@ -17,13 +19,15 @@ struct exec_state {
 	U8* memory;
 	U64 memory_size;
 	U32 (*input_callback)();
-	void (*output_callback)(U32);
-	void (*error_callback)(StrA);
+	File* out_file;
+	File* error_file;
 };
 exec_state* current_state;
 
 void ASM_THROW_ERROR(StrA error) {
-	current_state->error_callback(strafmt(*(current_state->memory_arena), "ERROR on line %: %\n"a, current_state->registers[PC_REGISTER] + 1, error));
+	if (current_state->error_file) {
+		io_print(*current_state->error_file, strafmt(*(current_state->memory_arena), "ERROR on line %: %\n"a, current_state->registers[PC_REGISTER] + 1, error));
+	}
 }
 
 
@@ -671,7 +675,9 @@ U8 in_error_check(StrA line) {
 void out_inst(StrA line) {
 	SerializeTools::skip_whitespace(&line);
 	U8 src1 = parse_register(&line);
-	current_state->output_callback(current_state->registers[src1]);
+	if (current_state->out_file) {
+		io_print(*current_state->out_file, strafmt(*(current_state->memory_arena), "%"a, current_state->registers[src1]));
+	}
 }
 
 U8 out_error_check(StrA line) {
