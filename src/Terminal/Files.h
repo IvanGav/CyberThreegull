@@ -1,5 +1,6 @@
 ﻿#pragma once
-#include "Terminal.h"
+typedef ArenaArrayList<ArenaArrayList<char>> File;
+void io_print(File&, StrA);
 
 /* Making Puzzles files*/
 
