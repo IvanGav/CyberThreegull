@@ -296,10 +296,14 @@ void io_print(File& f, StrA s) {
 
 // Given a command, interpret it. Return false.
 bool interpretCommand(StrA cmd) {
-    cmd++; cmd++;
     int from = 0;
     int cmdsize;
     seek(cmd, from, cmdsize);
+
+    printf("cmd=%\n"a,cmd);
+    printf("seek=%, from=%\n"a, cmdsize, from);
+    printf("substr=%\n"a, cmd.substr(from, cmdsize));
+    printf("eq=%\n"a, cmd.substr(from, cmdsize)=="help"a);
 
     File& io = wt->io;
     
@@ -465,7 +469,6 @@ void set_cur_terminal_line() {
     wt->io.back().push_back_n(data.data, data.size);
 
     curCursorY = wt->io.size - 1;
-    editingHistory = wt->history.size - 1;
     make_rightmost();
 }
 
@@ -473,6 +476,7 @@ void set_cur_terminal_line() {
 void new_cmd_line() {
     wt->history.push_back(ArenaArrayList<char>{});
     wt->io.push_back(ArenaArrayList<char>{});
+    editingHistory = wt->history.size - 1;
     set_cur_terminal_line();
 }
 
