@@ -78,6 +78,7 @@ ArenaArrayList<char> strAToVec(StrA s);
 bool interpretCommand(StrA cmd);
 void print_dir();
 void print_help();
+void vim();
 void mkdir();
 void cat();
 bool exit();
@@ -186,6 +187,7 @@ void terminalsInit() {
 void openTerminal(int terminal) {
     terminalMode = TerminalMode::Cmd;
     wt = &ts[terminal];
+    wd = &wt->root;
     wf = &wt->io;
     curCursorX = 2;
     curCursorY = wf->size - 1;
@@ -308,33 +310,29 @@ bool interpretCommand(StrA cmd) {
     int cmdsize;
     seek(cmd, from, cmdsize);
 
-    printf("cmd=%\n"a,cmd);
-    printf("seek=%, from=%\n"a, cmdsize, from);
-    printf("substr=%\n"a, cmd.substr(from, cmdsize));
-    printf("eq=%\n"a, cmd.substr(from, cmdsize)=="help"a);
 
     File& io = wt->io;
     
-    if (cmd.substr(from, cmdsize) == "dir"a || cmd.substr(from, cmdsize) == "l"a) {
+    if (cmd.substr(0, cmdsize) == "dir"a || cmd.substr(from, cmdsize) == "l"a) {
         print_dir();
-    } else if (cmd.substr(from, cmdsize) == "help"a) {
+    } else if (cmd.substr(0, cmdsize) == "help"a) {
         print_help();
-    } else if (cmd.substr(from, cmdsize) == "vim"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "mkdir"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "cat"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "exit"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "pwd"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "exec"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "touch"a) {
-
-    } else if (cmd.substr(from, cmdsize) == "clear"a) {
-
+    } else if (cmd.substr(0, cmdsize) == "vim"a) {
+        vim();
+    } else if (cmd.substr(0, cmdsize) == "mkdir"a) {
+        mkdir();
+    } else if (cmd.substr(0, cmdsize) == "cat"a) {
+        cat();
+    } else if (cmd.substr(0, cmdsize) == "exit"a) {
+        exit();
+    } else if (cmd.substr(0, cmdsize) == "pwd"a) {
+        pwd();
+    } else if (cmd.substr(0, cmdsize) == "exec"a) {
+        exec();
+    } else if (cmd.substr(0, cmdsize) == "touch"a) {
+        touch();
+    } else if (cmd.substr(0, cmdsize) == "clear"a) {
+        clear();
     } else {
         io_print(io, "No such command exists."a);
     }
@@ -392,6 +390,10 @@ void print_help() {
     io_print(io, "  Exit"a);
 }
 
+void vim() {
+
+}
+
 void mkdir() {
 	File& io = wt->io;
     int cmdsize = 5;
@@ -444,12 +446,12 @@ bool exit() {
 void pwd() {
 	File& io = wt->io;
 	StrA path = ""a;
-	for (int i = 0; i < wd->size; i++) {
-		path = add_two_stra(path, wd->data[i].name);
-		if (i != wd->size - 1) {
-            path = add_two_stra(path, "/"a);
-		}
+	Dir* cur_dir = wd;
+	while (cur_dir != nullptr) {
+		path = cur_dir->data[0].name + "/"a + path;
+		cur_dir = get_dir(cur_dir->data[0].name);
 	}
+
 	io_print(io, path);
 
 }
@@ -482,7 +484,6 @@ void touch() {
 void clear() {
 	File& io = wt->io;
 	io.clear();
-	io.push_back(strAToVec(PROMPT));
 }
 
 int getLineLen() {
