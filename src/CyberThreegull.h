@@ -30,6 +30,8 @@ V2F32 userMouse;
 ArenaArrayList<VKGeometry::StaticModel> staticModelsToRender;
 ArenaArrayList<VKGeometry::SkeletalModel*> skeletalModelsToRender;
 
+I32 inTerminalIdx = -1;
+
 struct TermInterface {
 	V3F32 p1;
 	V3F32 p2;
@@ -82,8 +84,17 @@ DWORD WINAPI audio_thread_func(LPVOID) {
 
 void keyboard_callback(Win32::Key key, Win32::ButtonState state) {
 	V2F32 mousePos = Win32::get_mouse();
-	if (state == Win32::BUTTON_STATE_DOWN) {
-		typeChar(key, Win32::key_to_typed_char(key));
+	if (state == Win32::BUTTON_STATE_DOWN && inTerminalIdx != -1) {
+		if (typeChar(key, Win32::key_to_typed_char(key))) {
+			inTerminalIdx = -1;
+		}
+	}
+	if (key == Win32::KEY_E && state == Win32::BUTTON_STATE_DOWN && inTerminalIdx == -1) {
+		V2F32 interT1 = ray_intersect_rect(term0.p1, term0.p3 - term0.p1, term0.p2 - term0.p1, V3F32{ player.pos.x, 0.5F, player.pos.y }, V3F32{ player.forward.x, 0.0F, player.forward.y });
+		if (interT1.x >= 0.0F && interT1.y >= 0.0F && interT1.x <= 1.0F && interT1.y <= 1.0F) {
+			openTerminal(0);
+			inTerminalIdx = 0;
+		}
 	}
 }
 void mouse_callback(Win32::MouseButton button, Win32::MouseValue state) {
@@ -131,29 +142,32 @@ void update_world() {
 	player.forward = V2F32{ sinf32(player.yaw), -cosf32(player.yaw) };
 	player.right = V2F32{ sinf32(player.yaw + 0.25F), -cosf32(player.yaw + 0.25F) };
 	player.velocity = {};
-	if (Win32::keyboardState[Win32::KEY_W]) {
-		player.velocity += player.forward * 5.0F;
-	}
-	if (Win32::keyboardState[Win32::KEY_A]) {
-		player.velocity += -player.right * 5.0F;
-	}
-	if (Win32::keyboardState[Win32::KEY_S]) {
-		player.velocity += -player.forward * 5.0F;
-	}
-	if (Win32::keyboardState[Win32::KEY_D]) {
-		player.velocity += player.right * 5.0F;
-	}
-	V2F32 step = player.velocity * deltaTime;
-	V2F32 newPos = player.pos + step;
-	for (LineCollider c : colliders) {
-		V2F32 closest = closest_on_segment(newPos, c);
-		if (distance_sq(closest, newPos) >= player.radius * player.radius) {
-			continue;
+	
+	if (inTerminalIdx == -1) {
+		if (Win32::keyboardState[Win32::KEY_W]) {
+			player.velocity += player.forward * 5.0F;
 		}
-		step += normalize(newPos - closest) * (player.radius - length(newPos - closest));
-		newPos = player.pos + step;
+		if (Win32::keyboardState[Win32::KEY_A]) {
+			player.velocity += -player.right * 5.0F;
+		}
+		if (Win32::keyboardState[Win32::KEY_S]) {
+			player.velocity += -player.forward * 5.0F;
+		}
+		if (Win32::keyboardState[Win32::KEY_D]) {
+			player.velocity += player.right * 5.0F;
+		}
+		V2F32 step = player.velocity * deltaTime;
+		V2F32 newPos = player.pos + step;
+		for (LineCollider c : colliders) {
+			V2F32 closest = closest_on_segment(newPos, c);
+			if (distance_sq(closest, newPos) >= player.radius * player.radius) {
+				continue;
+			}
+			step += normalize(newPos - closest) * (player.radius - length(newPos - closest));
+			newPos = player.pos + step;
+		}
+		player.pos = newPos;
 	}
-	player.pos = newPos;
 }
 
 void do_frame() {
@@ -285,8 +299,6 @@ void do_frame() {
 
 		DynamicVertexBuffer::Tessellator& tes = DynamicVertexBuffer::get_tessellator();
 
-		printf("x%\n"a, distance(term0.p1, term0.p3));
-		printf("y%\n"a, distance(term0.p1, term0.p2));
 		{
 			M4x3F32 textTransform;
 			textTransform.set_identity();
